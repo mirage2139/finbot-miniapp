@@ -1,570 +1,1813 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FinBot — AML & Crypto Terminal</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <style>
-        :root {
-            --bg: #0c1014;
-            --card: #131922;
-            --card-border: #1f2937;
-            --accent: #3b82f6;
-            --danger: #ef4444;
-            --warn: #f59e0b;
-            --success: #10b981;
-            --text: #f3f4f6;
-            --muted: #9ca3af;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            margin: 0; padding: 0 0 76px 0;
-            background: var(--bg); color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-size: 14px;
-        }
-        header {
-            position: sticky; top: 0; z-index: 50;
-            background: rgba(12, 16, 20, 0.92); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--card-border);
-            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-        .badge-live {
-            background: #10b98120; color: var(--success); border: 1px solid #10b98150;
-            font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
-        }
-        .container { padding: 14px 16px; }
-        .tab-view { display: none; }
-        .tab-view.active { display: block; animation: fadeIn 0.18s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<title>FinBot Terminal</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e14; --bg2:#0e1420; --card:#121a26; --card2:#182232;
+  --border:#1e2937; --border2:#263244;
+  --accent:#6366f1; --accent2:#8b5cf6; --accent-soft:#6366f125;
+  --danger:#ef4444; --danger-soft:#ef444420;
+  --warn:#f59e0b; --warn-soft:#f59e0b20;
+  --success:#10b981; --success-soft:#10b98120;
+  --purple:#a855f7; --purple-soft:#a855f720;
+  --text:#f1f5f9; --text2:#e2e8f0; --muted:#94a3b8; --muted2:#64748b;
+  --radius:14px; --radius-sm:10px; --radius-lg:20px;
+  --shadow:0 8px 24px -8px rgba(0,0,0,0.6);
+  --shadow-lg:0 20px 60px -20px rgba(0,0,0,0.85);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;
+  font-size:14px; -webkit-font-smoothing:antialiased;
+  padding:0 0 calc(78px + env(safe-area-inset-bottom)) 0;
+  overscroll-behavior-y:contain; min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(60% 40% at 50% 0%, #6366f110 0%, transparent 60%),
+    radial-gradient(40% 30% at 90% 100%, #8b5cf610 0%, transparent 70%);
+}
 
-        .card {
-            background: var(--card); border: 1px solid var(--card-border);
-            border-radius: 12px; padding: 14px; margin-bottom: 12px;
-        }
-        .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0; }
+/* ---------- HEADER ---------- */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(10,14,20,0.82); backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:12px 14px calc(12px + env(safe-area-inset-top)) 14px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  display:flex;justify-content:space-between;align-items:center;
+}
+.brand{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px}
+.brand .logo{
+  width:26px;height:26px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  box-shadow:0 4px 12px -2px #6366f160;
+}
+.badge-live{
+  background:#10b98118;color:#34d399;border:1px solid #10b98140;
+  font-size:9px;padding:2px 7px;border-radius:99px;font-weight:700;letter-spacing:0.4px;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.badge-live::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:#34d399;
+  box-shadow:0 0 6px #34d399; animation:pulse 1.6s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+.icon-btn{
+  background:transparent;border:1px solid var(--border2);color:var(--text2);
+  width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;transition:.15s;
+}
+.icon-btn:active{background:var(--card2);transform:scale(.95)}
 
-        input, select {
-            width: 100%; background: #0c1014; border: 1px solid var(--card-border);
-            color: var(--text); padding: 11px 12px; border-radius: 8px; font-size: 13px;
-            outline: none; margin-bottom: 10px;
-        }
-        input:focus, select:focus { border-color: var(--accent); }
+/* ---------- CONTAINER / TABS ---------- */
+.container{padding:14px 14px 20px 14px;max-width:520px;margin:0 auto}
+.tab-view{display:none}
+.tab-view.active{display:block;animation:fadeUp .22s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-        .btn {
-            width: 100%; background: var(--accent); color: #fff; border: none;
-            padding: 11px 14px; border-radius: 8px; font-weight: 600; font-size: 13px;
-            cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 6px;
-        }
-        .btn:active { opacity: 0.85; }
-        .btn-outline { background: #1f2937; border: 1px solid #374151; color: var(--text); }
-        .btn-sm { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 6px; }
-        .btn-danger { background: #ef444420; color: var(--danger); border: 1px solid #ef444450; }
+/* ---------- CARDS ---------- */
+.card{
+  background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
+}
+.card-title{
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.6px;margin:0 0 12px 0;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.card-title .hint{font-size:10px;color:var(--muted2);font-weight:500;letter-spacing:0;text-transform:none}
 
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-        .stat-pill {
-            background: var(--card); border: 1px solid var(--card-border);
-            border-radius: 10px; padding: 10px; text-align: center;
-        }
-        .stat-pill span { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-        .stat-pill b { font-size: 16px; }
+/* ---------- INPUTS ---------- */
+input,select,textarea{
+  width:100%;background:#0a0e14;border:1px solid var(--border2);color:var(--text);
+  padding:11px 13px;border-radius:var(--radius-sm);font-size:14px;
+  outline:none;transition:.15s;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input::placeholder{color:var(--muted2)}
+select{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5L6 7.5L9 4.5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 
-        .tag {
-            display: inline-block; padding: 3px 8px; border-radius: 6px;
-            font-size: 11px; font-weight: 600; margin: 0 4px 4px 0;
-        }
-        .tag-high { background: #ef444425; color: #f87171; border: 1px solid #ef444450; }
-        .tag-med { background: #f59e0b25; color: #fbbf24; border: 1px solid #f59e0b50; }
-        .tag-low { background: #10b98125; color: #34d399; border: 1px solid #10b98150; }
+/* ---------- BUTTONS ---------- */
+.btn{
+  width:100%;border:none;padding:12px 16px;border-radius:var(--radius-sm);
+  font-weight:600;font-size:14px;cursor:pointer;
+  display:inline-flex;justify-content:center;align-items:center;gap:6px;
+  transition:.15s;font-family:inherit;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 6px 16px -4px #6366f170}
+.btn-outline{background:var(--card2);border:1px solid var(--border2);color:var(--text2)}
+.btn-outline:active{background:#22304a}
+.btn-danger{background:var(--danger-soft);color:#f87171;border:1px solid #ef444450}
+.btn-success{background:var(--success-soft);color:#34d399;border:1px solid #10b98150}
+.btn-sm{width:auto;padding:7px 11px;font-size:12px;border-radius:8px}
+.btn-xs{width:auto;padding:4px 8px;font-size:11px;border-radius:6px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
 
-        #graph-box {
-            width: 100%; height: 340px; background: #080b0e;
-            border: 1px solid var(--card-border); border-radius: 10px; position: relative;
-        }
-        #node-popup {
-            display: none; margin-top: 8px; padding: 10px;
-            background: #0e131a; border: 1px solid #283548; border-radius: 8px; font-size: 12px;
-        }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 12px; }
+/* ---------- STAT PILLS ---------- */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-pill{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:11px 8px;text-align:center;
+}
+.stat-pill span{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.stat-pill b{font-size:16px;font-weight:800;letter-spacing:-0.4px}
 
-        .list-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid var(--card-border); gap: 8px;
-        }
-        .list-item:last-child { border-bottom: none; }
+/* ---------- TAGS ---------- */
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 9px;border-radius:7px;font-size:11px;font-weight:600;
+  margin:0 4px 5px 0;letter-spacing:.1px;
+}
+.tag-high{background:var(--danger-soft);color:#fca5a5;border:1px solid #ef444440}
+.tag-med{background:var(--warn-soft);color:#fcd34d;border:1px solid #f59e0b40}
+.tag-low{background:var(--success-soft);color:#6ee7b7;border:1px solid #10b98140}
+.tag-info{background:var(--accent-soft);color:#a5b4fc;border:1px solid #6366f140}
+.tag-purple{background:var(--purple-soft);color:#d8b4fe;border:1px solid #a855f740}
 
-        nav.bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
-            background: rgba(15, 20, 28, 0.96); backdrop-filter: blur(12px);
-            border-top: 1px solid var(--card-border);
-            display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px 10px 4px;
-        }
-        .nav-btn {
-            background: none; border: none; color: var(--muted);
-            display: flex; flex-direction: column; align-items: center; gap: 3px;
-            font-size: 10px; font-weight: 500; cursor: pointer; padding: 4px 0;
-        }
-        .nav-btn.active { color: var(--accent); font-weight: 700; }
-        .nav-btn .ico { font-size: 18px; }
-    </style>
+/* ---------- LIST ---------- */
+.list-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--border);gap:10px;
+}
+.list-item:last-child{border-bottom:none}
+.list-item .li-main{flex:1;min-width:0}
+.li-main .li-title{font-weight:600;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.li-main .li-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;font-size:12px}
+
+/* ---------- HERO PORTFOLIO ---------- */
+.hero{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#1a2340 0%,#131a2e 60%,#0f1522 100%);
+  border:1px solid #2a3a5c; border-radius:var(--radius-lg);
+  padding:18px;margin-bottom:12px;box-shadow:var(--shadow);
+}
+.hero::after{
+  content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;
+  background:radial-gradient(circle,#6366f130 0%,transparent 70%);border-radius:50%;
+}
+.hero-label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:6px}
+.hero-amount{font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.hero-sub{font-size:14px;color:#94a3b8;font-weight:500;margin-top:2px}
+.hero-chips{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;position:relative;z-index:1}
+
+/* ---------- TICKER STRIP ---------- */
+.ticker{
+  display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:none;-ms-overflow-style:none;margin:0 -14px;padding-left:14px;padding-right:14px;
+}
+.ticker::-webkit-scrollbar{display:none}
+.tick-card{
+  flex:0 0 auto;min-width:120px;padding:10px 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  display:flex;flex-direction:column;gap:2px;
+}
+.tick-card .tc-pair{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+.tick-card .tc-val{font-size:15px;font-weight:800;letter-spacing:-0.3px}
+.tick-card .tc-src{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.4px}
+
+/* ---------- RADIAL GAUGE ---------- */
+.gauge-wrap{display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 0}
+.gauge{position:relative;width:132px;height:132px;flex-shrink:0}
+.gauge svg{transform:rotate(-90deg);width:100%;height:100%}
+.gauge .track{stroke:#1e2937}
+.gauge .bar{transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1);stroke-linecap:round}
+.gauge .gauge-inner{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+}
+.gauge .gauge-val{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1}
+.gauge .gauge-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.gauge-info{flex:1;min-width:0}
+.gauge-info .gi-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)}
+.gauge-info .gi-row:last-child{border-bottom:none}
+.gauge-info .gi-row span{color:var(--muted)}
+.gauge-info .gi-row b{color:var(--text2)}
+
+/* ---------- GRAPH TOOLBAR ---------- */
+.graph-tools{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;
+  scrollbar-width:none;
+}
+.graph-tools::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:5px 10px;border-radius:99px;font-size:11px;font-weight:600;
+  background:var(--card2);border:1px solid var(--border2);color:var(--muted);cursor:pointer;
+  transition:.15s;user-select:none;
+}
+.chip.active{background:var(--accent-soft);color:#a5b4fc;border-color:#6366f160}
+.chip:active{transform:scale(.96)}
+
+.slider-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.slider-row label{font-size:11px;color:var(--muted);min-width:60px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.slider-row input[type="range"]{
+  flex:1;padding:0;height:4px;background:var(--card2);border-radius:99px;-webkit-appearance:none;appearance:none;
+  border:none;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;
+  box-shadow:0 2px 8px #6366f180;
+}
+.slider-row .val{font-size:11px;color:var(--text2);font-weight:700;min-width:52px;text-align:right}
+
+#graph-box{
+  width:100%;height:360px;background:radial-gradient(circle at 50% 40%,#0f1520 0%,#080b0e 100%);
+  border:1px solid var(--border);border-radius:var(--radius-sm);position:relative;overflow:hidden;
+}
+#graph-box::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle, #ffffff05 1px, transparent 1px);
+  background-size:20px 20px;
+}
+
+#node-popup{
+  display:none;margin-top:10px;padding:12px;
+  background:#0f1622;border:1px solid #2a3a5c;border-radius:var(--radius-sm);
+  animation:fadeUp .2s;
+}
+
+/* ---------- SPARKLINE ---------- */
+.spark{display:block;width:60px;height:26px}
+
+/* ---------- BOTTOM NAV ---------- */
+nav.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
+  background:rgba(10,14,20,0.9); backdrop-filter:saturate(180%) blur(24px);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(5,1fr);
+  padding:6px 4px calc(8px + env(safe-area-inset-bottom)) 4px;
+  max-width:520px;margin:0 auto;
+}
+.nav-btn{
+  background:none;border:none;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;font-weight:600;cursor:pointer;padding:5px 0;
+  transition:.15s;position:relative;
+}
+.nav-btn .ico{font-size:19px;transition:.2s;display:flex;align-items:center;justify-content:center}
+.nav-btn.active{color:var(--accent)}
+.nav-btn.active .ico{transform:translateY(-1px) scale(1.05);filter:drop-shadow(0 2px 6px #6366f180)}
+.nav-btn:active .ico{transform:scale(.9)}
+
+/* ---------- SHEETS / MODALS ---------- */
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:80;
+  opacity:0;pointer-events:none;transition:.22s;backdrop-filter:blur(3px);
+}
+.sheet-backdrop.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:90;
+  background:var(--bg2);border-radius:22px 22px 0 0;
+  max-height:88vh;overflow-y:auto; padding:0 0 calc(20px + env(safe-area-inset-bottom)) 0;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  box-shadow:var(--shadow-lg);max-width:520px;margin:0 auto;
+}
+.sheet.show{transform:translateY(0)}
+.sheet-handle{
+  padding:10px 0 4px 0;display:flex;justify-content:center;position:sticky;top:0;
+  background:linear-gradient(180deg,var(--bg2) 0%,var(--bg2) 70%,transparent 100%);z-index:1;
+}
+.sheet-handle::after{content:"";width:38px;height:4px;background:#475569;border-radius:99px}
+.sheet-header{
+  padding:6px 18px 12px 18px;display:flex;justify-content:space-between;
+  align-items:flex-start;gap:12px;border-bottom:1px solid var(--border);
+}
+.sheet-header h3{margin:0;font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.sheet-header .sub{font-size:11px;color:var(--muted);margin-top:3px}
+.sheet-body{padding:14px 18px}
+
+/* ---------- TOASTS ---------- */
+#toasts{
+  position:fixed;top:calc(70px + env(safe-area-inset-top));left:14px;right:14px;z-index:200;
+  display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;
+}
+.toast{
+  max-width:100%;padding:10px 14px;border-radius:12px;
+  font-size:13px;font-weight:600;color:#fff;
+  background:#1e293b;border:1px solid #334155;
+  box-shadow:var(--shadow-lg);animation:toastIn .25s cubic-bezier(.4,0,.2,1);
+  pointer-events:auto;
+}
+.toast-info{background:linear-gradient(135deg,#1e293b,#1e3a8a)}
+.toast-success{background:linear-gradient(135deg,#064e3b,#059669);border-color:#10b98150}
+.toast-error{background:linear-gradient(135deg,#7f1d1d,#dc2626);border-color:#ef444450}
+.toast-warn{background:linear-gradient(135deg,#78350f,#d97706);border-color:#f59e0b50}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* ---------- SKELETON ---------- */
+.skel{background:linear-gradient(90deg,#1a2333 0%,#22304a 50%,#1a2333 100%);
+  background-size:200% 100%;animation:skel 1.4s ease infinite;border-radius:6px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-line{height:12px;margin-bottom:8px}
+.skel-line.w60{width:60%}
+.skel-line.w40{width:40%}
+.skel-line.w80{width:80%}
+
+/* ---------- EMPTY STATE ---------- */
+.empty{
+  text-align:center;padding:32px 20px;color:var(--muted);
+}
+.empty .em-ico{font-size:42px;margin-bottom:10px;opacity:.6}
+.empty .em-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:4px}
+.empty .em-sub{font-size:12px;line-height:1.5}
+
+/* ---------- CHART CANVAS ---------- */
+.chart-canvas{width:100%;height:180px;display:block}
+
+/* ---------- SEARCH BAR ---------- */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{padding-left:36px}
+.search-wrap::before{
+  content:"🔎";position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:13px;opacity:.5;pointer-events:none;
+}
+
+/* ---------- MISC ---------- */
+.row{display:flex;gap:8px;align-items:center}
+.row-wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.hidden{display:none!important}
+.text-muted{color:var(--muted)}
+.text-danger{color:#f87171}
+.text-success{color:#34d399}
+.text-warn{color:#fbbf24}
+.fs-11{font-size:11px}.fs-12{font-size:12px}.fs-13{font-size:13px}
+.fw-700{font-weight:700}.fw-800{font-weight:800}
+.mt-6{margin-top:6px}.mt-10{margin-top:10px}.mt-14{margin-top:14px}
+.mb-6{margin-bottom:6px}.mb-10{margin-bottom:10px}
+.ta-r{text-align:right}.ta-c{text-align:center}
+
+/* ---------- LIVE FEED ITEM ---------- */
+.feed-item{
+  padding:12px;margin-bottom:8px;border-radius:var(--radius-sm);
+  background:var(--card);border:1px solid var(--border);
+  animation:fadeUp .3s;
+  position:relative;overflow:hidden;
+}
+.feed-item.fresh::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--accent),var(--accent2));
+  animation:freshPulse 2s infinite;
+}
+@keyframes freshPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.feed-item.new{animation:newItem 1.2s}
+@keyframes newItem{0%{background:#6366f130}100%{background:var(--card)}}
+
+/* ---------- TABLE (for tokens/assets) ---------- */
+.asset-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--border)}
+.asset-row:last-child{border-bottom:none}
+.asset-row .ar-l{font-size:12px;color:var(--text2);font-weight:600}
+.asset-row .ar-r{font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+</style>
 </head>
 <body>
 
 <header>
-    <div class="brand">🛡️ FinBot Terminal <span class="badge-live">MINI APP</span></div>
-    <button class="btn btn-outline btn-sm" onclick="promptApiUrl()">⚙️ API</button>
+  <div class="brand">
+    <div class="logo">🛡️</div>
+    <span>FinBot</span>
+    <span class="badge-live">LIVE</span>
+  </div>
+  <div class="row">
+    <button class="icon-btn" onclick="openSearch()" title="Поиск">🔎</button>
+    <button class="icon-btn" onclick="openProfileSheet()" title="Профиль">⚙️</button>
+  </div>
 </header>
 
 <div class="container">
-    <!-- ВКЛАДКА 1: AML & ГРАФ -->
-    <section id="tab-aml" class="tab-view active">
-        <div class="card">
-            <div class="card-title">🔍 AML-проверка и 3D-граф</div>
-            <select id="aml-currency">
-                <option value="usdt_trc20">USDT (TRC-20 / TRON)</option>
-                <option value="usdt_erc20">USDT (ERC-20 / Ethereum)</option>
-                <option value="usdc_erc20">USDC (ERC-20 / Ethereum)</option>
-                <option value="trx">TRX (Tron Native)</option>
-                <option value="eth">ETH (Ethereum)</option>
-                <option value="btc">BTC (Bitcoin)</option>
-            </select>
-            <input type="text" id="aml-address" placeholder="Вставьте адрес кошелька (T... / 0x... / bc1...)">
-            <button class="btn" id="btn-run-aml" onclick="runAmlCheck()">🚀 Запустить глубокий анализ</button>
-        </div>
 
-        <div id="aml-result-container" style="display:none;">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-size:11px; color:var(--muted);" id="res-cur">USDT TRC-20</div>
-                        <div class="mono" id="res-addr" style="margin-top:2px;"></div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div id="res-score" style="font-size:24px; font-weight:800;">0%</div>
-                        <div id="res-level" style="font-size:11px;">Минимальный риск</div>
-                    </div>
-                </div>
-                <hr style="border:none; border-top:1px solid var(--card-border); margin:12px 0;">
-                <div class="stats-row" style="margin-bottom:8px;">
-                    <div class="stat-pill"><span>Баланс</span><b id="res-bal">0</b></div>
-                    <div class="stat-pill"><span>В USD</span><b id="res-usd">$0</b></div>
-                    <div class="stat-pill"><span>Транзакций</span><b id="res-tx">0</b></div>
-                </div>
-                <div id="res-signals" style="margin-top:8px;"></div>
+  <!-- ================= HOME ================= -->
+  <section id="tab-home" class="tab-view active">
+    <div class="hero" id="home-hero">
+      <div class="hero-label">Портфель</div>
+      <div class="hero-amount" id="hero-usd">$0.00</div>
+      <div class="hero-sub" id="hero-rub">₽0.00</div>
+      <div class="hero-chips" id="hero-chips"></div>
+    </div>
+
+    <div class="card" style="padding:12px 0 12px 0;">
+      <div class="card-title" style="padding:0 14px 4px 14px;">
+        <span>💱 Рынки</span>
+        <span class="hint">Потяните →</span>
+      </div>
+      <div class="ticker" id="home-ticker"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>⚡ Быстрые действия</span>
+      </div>
+      <div class="row row-wrap">
+        <button class="btn btn-outline btn-sm grow" onclick="switchTab('aml',document.querySelectorAll('.nav-btn')[1])">🔍 AML</button>
+        <button class="btn btn-outline btn-sm grow" onclick="switchTab('wallets',document.querySelectorAll('.nav-btn')[2])">💼 Кошельки</button>
+        <button class="btn btn-outline btn-sm grow" onclick="switchTab('rates',document.querySelectorAll('.nav-btn')[3])">💸 Курсы</button>
+        <button class="btn btn-outline btn-sm grow" onclick="switchTab('blacklist',document.querySelectorAll('.nav-btn')[4])">🚨 Blacklist</button>
+      </div>
+    </div>
+
+    <div id="home-alerts-box"></div>
+    <div id="home-wallets-box"></div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>🚨 Live-лента Blacklist</span>
+        <button class="btn btn-outline btn-xs" onclick="switchTab('blacklist',document.querySelectorAll('.nav-btn')[4])">Все →</button>
+      </div>
+      <div id="home-blacklist"></div>
+    </div>
+  </section>
+
+  <!-- ================= AML ================= -->
+  <section id="tab-aml" class="tab-view">
+    <div class="card">
+      <div class="card-title">🔍 AML-анализ</div>
+      <select id="aml-currency">
+        <option value="usdt_trc20">USDT (TRC-20 / TRON)</option>
+        <option value="usdt_erc20">USDT (ERC-20 / Ethereum)</option>
+        <option value="usdc_erc20">USDC (ERC-20 / Ethereum)</option>
+        <option value="usdc_trc20">USDC (TRC-20 / TRON)</option>
+        <option value="trx">TRX (Tron)</option>
+        <option value="eth">ETH (Ethereum)</option>
+        <option value="bnb">BNB (BSC)</option>
+        <option value="btc">BTC (Bitcoin)</option>
+        <option value="ton">TON</option>
+      </select>
+      <input type="text" id="aml-address" placeholder="Адрес: T… / 0x… / bc1…" autocomplete="off">
+      <button class="btn btn-primary" id="btn-run-aml" onclick="runAmlCheck()">🚀 Запустить анализ</button>
+    </div>
+
+    <div id="aml-result-container" style="display:none;">
+      <div class="card">
+        <div class="gauge-wrap">
+          <div class="gauge">
+            <svg viewBox="0 0 120 120">
+              <circle class="track" cx="60" cy="60" r="52" stroke-width="10" fill="none"/>
+              <circle class="bar" id="gauge-bar" cx="60" cy="60" r="52" stroke-width="10" fill="none"
+                      stroke-dasharray="326.7" stroke-dashoffset="326.7" id="gauge-bar"/>
+            </svg>
+            <div class="gauge-inner">
+              <div class="gauge-val" id="res-score">0%</div>
+              <div class="gauge-lbl" id="res-level">—</div>
             </div>
+          </div>
+          <div class="gauge-info">
+            <div class="gi-row"><span>Монета</span><b id="res-cur">—</b></div>
+            <div class="gi-row"><span>Баланс</span><b id="res-bal">0</b></div>
+            <div class="gi-row"><span>В USD</span><b id="res-usd">$0</b></div>
+            <div class="gi-row"><span>Транзакций</span><b id="res-tx">0</b></div>
+          </div>
+        </div>
+        <div class="mono fs-11 text-muted ta-c" id="res-addr" style="margin-top:8px;"></div>
+        <div class="row row-wrap" style="margin-top:12px;justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="downloadAmlPdf()">📄 PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="openShareCard()">🖼 Карточка</button>
+          <button class="btn btn-outline btn-sm" onclick="copyToClipboard(document.getElementById('res-addr').textContent)">📋 Копировать</button>
+          <a class="btn btn-outline btn-sm" id="res-explorer" target="_blank" rel="noopener">🔗 Explorer</a>
+        </div>
+      </div>
 
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <div class="card-title" style="margin:0;">🕸 Интерактивный граф связей</div>
-                    <button class="btn btn-outline btn-sm" onclick="fitGraph()">🎯 Центрировать</button>
-                </div>
-                <div id="graph-box"></div>
-                <div id="node-popup"></div>
-            </div>
-        </div>
-    </section>
+      <div class="card">
+        <div class="card-title">🚨 Сигналы</div>
+        <div id="res-signals"></div>
+      </div>
 
-    <!-- ВКЛАДКА 2: BLACKLIST -->
-    <section id="tab-blacklist" class="tab-view">
-        <div class="stats-row">
-            <div class="stat-pill"><span>⚠️ Freeze-Gap</span><b id="bl-pending" style="color:var(--warn);">0</b></div>
-            <div class="stat-pill"><span>🚫 Заморожено</span><b id="bl-frozen" style="color:var(--danger);">0</b></div>
-            <div class="stat-pill"><span>🔥 Сожжено</span><b id="bl-destroyed" style="color:#a855f7;">0</b></div>
+      <div class="card">
+        <div class="card-title">
+          <span>🕸 Граф связей</span>
+          <button class="btn btn-outline btn-xs" onclick="fitGraph()">🎯 Центр</button>
         </div>
-        <div class="card">
-            <div style="display:flex; gap:6px; margin-bottom:10px;">
-                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('all')">🌐 Все</button>
-                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('pending')">⚠️ Готовятся</button>
-                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('frozen')">🚫 Заморожены</button>
-                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('destroyed')">🔥 Сожжены</button>
-            </div>
-            <div id="bl-feed-list">Загрузка событий...</div>
+        <div class="graph-tools" id="graph-chips"></div>
+        <div class="slider-row">
+          <label>Мин. $</label>
+          <input type="range" id="graph-min-amount" min="0" max="20000" step="100" value="0"
+                 oninput="applyGraphFilters()">
+          <span class="val" id="graph-min-amount-val">$0</span>
         </div>
-    </section>
+        <div class="slider-row">
+          <label>Дата</label>
+          <input type="range" id="graph-time" min="0" max="100" value="100"
+                 oninput="applyGraphFilters()">
+          <span class="val" id="graph-time-val">всё</span>
+        </div>
+        <div id="graph-box"></div>
+        <div id="node-popup"></div>
+      </div>
 
-    <!-- ВКЛАДКА 3: КОШЕЛЬКИ -->
-    <section id="tab-wallets" class="tab-view">
-        <div class="card">
-            <div class="card-title">➕ Добавить в криптотрекер</div>
-            <select id="add-wallet-cur">
-                <option value="usdt_trc20">USDT (TRC-20)</option>
-                <option value="usdt_erc20">USDT (ERC-20)</option>
-                <option value="trx">TRX</option>
-                <option value="eth">ETH</option>
-                <option value="btc">BTC</option>
-                <option value="ton">TON</option>
-            </select>
-            <input type="text" id="add-wallet-addr" placeholder="Адрес кошелька">
-            <button class="btn" onclick="addWallet()">➕ Добавить кошелёк</button>
-        </div>
-        <div class="card">
-            <div class="card-title">📋 Мои отслеживаемые кошельки</div>
-            <div id="wallets-list">Загрузка...</div>
-        </div>
-    </section>
+      <div class="card">
+        <div class="card-title">📊 Разбивка риска</div>
+        <div id="res-breakdown"></div>
+      </div>
 
-    <!-- ВКЛАДКА 4: КУРСЫ -->
-    <section id="tab-rates" class="tab-view">
-        <div class="card">
-            <div class="card-title">💱 Актуальные котировки</div>
-            <input type="text" id="rate-search" placeholder="Поиск пары или источника (USD, Rapira, Binance...)" oninput="filterRates()">
-            <div id="rates-list">Загрузка курсов...</div>
-        </div>
-    </section>
+      <div class="card" id="res-assets-card" style="display:none;">
+        <div class="card-title">💎 Активы кошелька</div>
+        <div id="res-assets"></div>
+      </div>
+    </div>
+  </section>
 
-    <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
-    <section id="tab-profile" class="tab-view">
-        <div class="card">
-            <div class="card-title">👤 Ваш аккаунт</div>
-            <div class="list-item"><span>Telegram ID</span><b id="prof-id">—</b></div>
-            <div class="list-item"><span>Подписка</span><b id="prof-sub">—</b></div>
-            <div class="list-item"><span>Баланс AML-проверок</span><b id="prof-aml">0</b></div>
-            <div class="list-item"><span>Бонусный баланс</span><b id="prof-bonus">0 ₽</b></div>
-            <div class="list-item"><span>Реферальный код</span><b class="mono" id="prof-ref">—</b></div>
-        </div>
-        <div class="card">
-            <div class="card-title">📋 История AML-проверок</div>
-            <div id="prof-history">Загрузка...</div>
-        </div>
-    </section>
+  <!-- ================= BLACKLIST ================= -->
+  <section id="tab-blacklist" class="tab-view">
+    <div class="stats-row">
+      <div class="stat-pill"><span>Freeze-Gap</span><b id="bl-pending" style="color:var(--warn);">0</b></div>
+      <div class="stat-pill"><span>Заморожено</span><b id="bl-frozen" style="color:var(--danger);">0</b></div>
+      <div class="stat-pill"><span>Сожжено</span><b id="bl-destroyed" style="color:var(--purple);">0</b></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>🚨 Live-лента</span>
+        <span class="badge-live" id="sse-badge">SSE</span>
+      </div>
+      <div class="graph-tools">
+        <div class="chip active" data-bl-kind="all" onclick="setBlFilter(this,'all')">🌐 Все</div>
+        <div class="chip" data-bl-kind="pending" onclick="setBlFilter(this,'pending')">⚠️ Готовятся</div>
+        <div class="chip" data-bl-kind="frozen" onclick="setBlFilter(this,'frozen')">🚫 Зам.</div>
+        <div class="chip" data-bl-kind="destroyed" onclick="setBlFilter(this,'destroyed')">🔥 Сожжены</div>
+        <div class="chip" data-bl-net="trc20" onclick="setBlNet(this,'trc20')">TRC-20</div>
+        <div class="chip" data-bl-net="erc20" onclick="setBlNet(this,'erc20')">ERC-20</div>
+      </div>
+      <div id="bl-feed-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= WALLETS ================= -->
+  <section id="tab-wallets" class="tab-view">
+    <div class="hero" style="margin-bottom:12px;">
+      <div class="hero-label">Всего в портфеле</div>
+      <div class="hero-amount" id="w-portfolio-usd">$0.00</div>
+      <div class="hero-sub" id="w-portfolio-rub">₽0.00</div>
+      <div class="hero-chips" id="w-portfolio-dist"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">➕ Добавить кошелёк</div>
+      <select id="add-wallet-cur"></select>
+      <input type="text" id="add-wallet-addr" placeholder="Адрес кошелька" autocomplete="off">
+      <button class="btn btn-primary" onclick="addWallet()">➕ Добавить</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>📋 Мои кошельки</span>
+        <span class="hint" id="w-count"></span>
+      </div>
+      <div id="wallets-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= RATES ================= -->
+  <section id="tab-rates" class="tab-view">
+    <div class="card">
+      <div class="card-title">🔄 Конвертер</div>
+      <div class="row">
+        <input type="text" id="conv-from" placeholder="USD" value="USD" style="flex:1;text-transform:uppercase" autocomplete="off">
+        <span style="color:var(--muted);font-size:18px;font-weight:700;">→</span>
+        <input type="text" id="conv-to" placeholder="RUB" value="RUB" style="flex:1;text-transform:uppercase" autocomplete="off">
+      </div>
+      <input type="number" id="conv-amount" value="100" placeholder="Сумма">
+      <button class="btn btn-primary" onclick="doConvert()">💱 Конвертировать</button>
+      <div id="conv-result" class="ta-c mt-10 fs-13" style="color:var(--muted);"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>💹 Курсы</span>
+        <span class="hint">Спарклайны за 7 дней</span>
+      </div>
+      <div class="search-wrap">
+        <input type="text" id="rate-search" placeholder="Поиск..." oninput="filterRates()" autocomplete="off">
+      </div>
+      <div id="rates-list"></div>
+    </div>
+  </section>
+
 </div>
 
+<!-- ============ BOTTOM NAV ============ -->
 <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="switchTab('aml', this)"><span class="ico">🔍</span><span>AML & Граф</span></button>
-    <button class="nav-btn" onclick="switchTab('blacklist', this)"><span class="ico">🚨</span><span>Blacklist</span></button>
-    <button class="nav-btn" onclick="switchTab('wallets', this)"><span class="ico">💼</span><span>Кошельки</span></button>
-    <button class="nav-btn" onclick="switchTab('rates', this)"><span class="ico">💸</span><span>Курсы</span></button>
-    <button class="nav-btn" onclick="switchTab('profile', this)"><span class="ico">👤</span><span>Профиль</span></button>
+  <button class="nav-btn active" onclick="switchTab('home',this)"><span class="ico">🏠</span><span>Главная</span></button>
+  <button class="nav-btn" onclick="switchTab('aml',this)"><span class="ico">🔍</span><span>AML</span></button>
+  <button class="nav-btn" onclick="switchTab('wallets',this)"><span class="ico">💼</span><span>Портфель</span></button>
+  <button class="nav-btn" onclick="switchTab('rates',this)"><span class="ico">💸</span><span>Рынки</span></button>
+  <button class="nav-btn" onclick="switchTab('blacklist',this)"><span class="ico">🚨</span><span>Blacklist</span></button>
 </nav>
 
+<!-- ============ TOASTS ============ -->
+<div id="toasts"></div>
+
+<!-- ============ SHEET: PROFILE ============ -->
+<div class="sheet-backdrop" id="profile-backdrop" onclick="closeSheet('profile')"></div>
+<div class="sheet" id="profile-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div>
+      <h3>👤 Профиль</h3>
+      <div class="sub" id="prof-id-sub">—</div>
+    </div>
+    <button class="icon-btn" onclick="closeSheet('profile')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="card" style="margin:0 0 12px 0;">
+      <div class="list-item"><span>Telegram ID</span><b id="prof-id">—</b></div>
+      <div class="list-item"><span>Подписка</span><b id="prof-sub">—</b></div>
+      <div class="list-item"><span>AML-проверок</span><b id="prof-aml">0</b></div>
+      <div class="list-item"><span>Бонусный баланс</span><b id="prof-bonus">0 ₽</b></div>
+      <div class="list-item"><span>Реферальный код</span><b class="mono" id="prof-ref">—</b></div>
+    </div>
+    <div class="row" style="margin-bottom:12px;">
+      <button class="btn btn-outline btn-sm grow" onclick="copyToClipboard(document.getElementById('prof-ref').textContent)">📋 Код</button>
+      <button class="btn btn-outline btn-sm grow" onclick="shareReferral()">🔗 Поделиться</button>
+      <button class="btn btn-outline btn-sm grow" onclick="promptApiUrl()">⚙️ API</button>
+    </div>
+    <div class="card-title">📋 История проверок</div>
+    <div id="prof-history"></div>
+  </div>
+</div>
+
+<!-- ============ SHEET: WALLET DETAIL ============ -->
+<div class="sheet-backdrop" id="wallet-backdrop" onclick="closeSheet('wallet')"></div>
+<div class="sheet" id="wallet-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div>
+      <h3 id="w-det-title">Кошелёк</h3>
+      <div class="sub mono" id="w-det-addr">—</div>
+    </div>
+    <button class="icon-btn" onclick="closeSheet('wallet')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="stats-row">
+      <div class="stat-pill"><span>Баланс</span><b id="w-det-bal">0</b></div>
+      <div class="stat-pill"><span>В USD</span><b id="w-det-usd">$0</b></div>
+      <div class="stat-pill"><span>Транзакций</span><b id="w-det-tx">0</b></div>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <div class="card-title">📈 История баланса</div>
+      <canvas id="w-det-chart" class="chart-canvas"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>📜 Транзакции</span>
+        <div class="graph-tools" style="margin:0;padding:0;">
+          <div class="chip active" onclick="setTxDir(this,'')">Все</div>
+          <div class="chip" onclick="setTxDir(this,'in')">🟢 IN</div>
+          <div class="chip" onclick="setTxDir(this,'out')">🔴 OUT</div>
+        </div>
+      </div>
+      <div id="w-det-txs"></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-outline btn-sm grow" onclick="amlFromWallet()">🔍 AML</button>
+      <a class="btn btn-outline btn-sm grow" id="w-det-explorer" target="_blank" rel="noopener">🔗 Explorer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SHEET: PAIR DETAIL ============ -->
+<div class="sheet-backdrop" id="pair-backdrop" onclick="closeSheet('pair')"></div>
+<div class="sheet" id="pair-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div>
+      <h3 id="pair-title">—</h3>
+      <div class="sub" id="pair-sub">—</div>
+    </div>
+    <button class="icon-btn" onclick="closeSheet('pair')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <canvas id="pair-chart" class="chart-canvas" style="height:220px;"></canvas>
+    <div class="divider"></div>
+    <div id="pair-forecast"></div>
+    <button class="btn btn-primary" style="margin-top:12px;" onclick="createAlertFromPair()">🔔 Создать алерт</button>
+  </div>
+</div>
+
+<!-- ============ SHEET: SHARE CARD ============ -->
+<div class="sheet-backdrop" id="share-backdrop" onclick="closeSheet('share')"></div>
+<div class="sheet" id="share-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div><h3>🖼 Карточка для шаринга</h3></div>
+    <button class="icon-btn" onclick="closeSheet('share')">✕</button>
+  </div>
+  <div class="sheet-body ta-c">
+    <img id="share-img" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);" alt="share card">
+    <div class="row mt-14">
+      <button class="btn btn-outline btn-sm grow" onclick="downloadShareImg()">⬇️ Скачать</button>
+      <button class="btn btn-primary btn-sm grow" onclick="shareToTelegram()">📤 Поделиться</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SHEET: SEARCH ============ -->
+<div class="sheet-backdrop" id="search-backdrop" onclick="closeSheet('search')"></div>
+<div class="sheet" id="search-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div><h3>🔎 Универсальный поиск</h3><div class="sub">Кошелёк · TxID · ФИО · ИНН · Email</div></div>
+    <button class="icon-btn" onclick="closeSheet('search')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <input type="text" id="search-input" placeholder="Введите запрос..." autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn btn-primary" onclick="doSearch()">🔎 Найти</button>
+    <div id="search-results" class="mt-14"></div>
+  </div>
+</div>
+
 <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
+/* ============================================================
+   BOOTSTRAP
+============================================================ */
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); try{ tg.setHeaderColor('#0a0e14'); tg.setBackgroundColor('#0a0e14'); }catch(_){} }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('api')) {
-        localStorage.setItem('finbot_api_url', urlParams.get('api').replace(/\/$/, ''));
+const params = new URLSearchParams(location.search);
+if (params.get('api')) localStorage.setItem('finbot_api_url', params.get('api').replace(/\/$/, ''));
+const devUid = params.get('user_id') || '640831993';
+
+const API_BASE = () => localStorage.getItem('finbot_api_url') || 'http://localhost:8080';
+
+/* ============================================================
+   УТИЛИТЫ
+============================================================ */
+function haptic(type='light'){ try{ tg?.HapticFeedback?.impactOccurred(type); }catch(_){} }
+function hapticNotify(t='success'){ try{ tg?.HapticFeedback?.notificationOccurred(t); }catch(_){} }
+
+function toast(msg, kind='info', ms=2500){
+  const box = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + kind;
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-10px)'; setTimeout(()=>el.remove(),250); }, ms);
+}
+
+async function apiFetch(path, opts = {}){
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (tg?.initData) headers['X-Telegram-Init-Data'] = tg.initData;
+  const sep = path.includes('?') ? '&' : '?';
+  const url = API_BASE() + path + (tg?.initData ? '' : sep + 'dev_user_id=' + devUid);
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+  if (!res.ok){
+    const err = await res.json().catch(()=>({detail:res.statusText}));
+    throw new Error(err.detail || 'HTTP ' + res.status);
+  }
+  return await res.json();
+}
+
+function copyToClipboard(text){
+  navigator.clipboard?.writeText(text).then(()=>{ toast('📋 Скопировано','success',1500); haptic(); });
+}
+function esc(s){ return String(s??'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtUsd(n){
+  if (n == null || isNaN(n)) return '$0';
+  const a = Math.abs(n);
+  if (a >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (a >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (a >= 1e3) return '$' + (n/1e3).toFixed(2) + 'K';
+  return '$' + Number(n).toFixed(2);
+}
+function fmtRub(n){ return n == null ? '₽0' : '₽' + Number(n).toLocaleString('ru-RU',{maximumFractionDigits:0}); }
+function fmtNum(n, d=6){
+  if (n == null || isNaN(n)) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (a >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  if (a >= 1) return n.toFixed(2);
+  return n.toFixed(d);
+}
+function shortAddr(a, h=8, t=6){
+  if (!a || a.length <= h+t+3) return a || '—';
+  return a.slice(0,h) + '…' + a.slice(-t);
+}
+function timeAgo(ts){
+  if (!ts) return '—';
+  const s = Math.floor(Date.now()/1000 - ts);
+  if (s < 60) return s + 'с';
+  if (s < 3600) return Math.floor(s/60) + 'м';
+  if (s < 86400) return Math.floor(s/3600) + 'ч';
+  return Math.floor(s/86400) + 'д';
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+const tabLoaded = {};
+function switchTab(name, btn){
+  haptic();
+  document.querySelectorAll('.tab-view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name)?.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'home' && !tabLoaded.home){ tabLoaded.home = 1; loadHome(); }
+  if (name === 'wallets'){ loadWallets(); }
+  if (name === 'rates' && !tabLoaded.rates){ tabLoaded.rates = 1; loadRates(); }
+  if (name === 'blacklist'){ loadBlacklist(); startSSE(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   HOME
+============================================================ */
+async function loadHome(){
+  document.getElementById('home-hero').insertAdjacentHTML('beforeend','<div class="skel" style="position:absolute;inset:0;opacity:.4;"></div>');
+  try {
+    const d = await apiFetch('/api/dashboard');
+    renderHomeHero(d.portfolio);
+    renderHomeTicker(d.ticker);
+    renderHomeAlerts(d.risk_alerts);
+    renderHomeWallets(d.portfolio.wallets);
+    renderHomeBlacklist(d.recent_blacklist);
+  } catch(e){
+    toast('Ошибка загрузки: ' + e.message, 'error');
+  } finally {
+    document.querySelector('#home-hero .skel')?.remove();
+  }
+}
+
+function renderHomeHero(p){
+  if (!p) return;
+  document.getElementById('hero-usd').textContent = fmtUsd(p.total_usd);
+  document.getElementById('hero-rub').textContent = fmtRub(p.total_rub);
+  const chips = document.getElementById('hero-chips');
+  chips.innerHTML = `
+    <span class="tag tag-info">💼 ${p.wallets_count} кошелёк(ов)</span>
+    <span class="tag tag-low">🟢 Активен</span>
+  `;
+}
+
+function renderHomeTicker(ticker){
+  const box = document.getElementById('home-ticker');
+  if (!ticker || !ticker.length){ box.innerHTML = '<div class="tick-card"><div class="tc-pair">Нет данных</div></div>'; return; }
+  box.innerHTML = ticker.map(t => `
+    <div class="tick-card" onclick="openPairSheet('${t.pair}','${esc(t.source)}')">
+      <div class="tc-pair">${esc(t.pair)}</div>
+      <div class="tc-val">${Number(t.rate).toFixed(t.rate > 100 ? 2 : 4)}</div>
+      <div class="tc-src">${esc(t.source)}</div>
+    </div>
+  `).join('');
+}
+
+function renderHomeAlerts(alerts){
+  const box = document.getElementById('home-alerts-box');
+  if (!alerts || !alerts.length){ box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div class="card" style="border-color:#ef444450;background:linear-gradient(135deg,#2a1420,#1a1018);">
+      <div class="card-title" style="color:#fca5a5;">⚠️ Риск-алерты</div>
+      ${alerts.map(a => `
+        <div class="list-item" style="cursor:pointer;" onclick="goToAml('${esc(a.address)}','${esc(a.currency)}')">
+          <div class="li-main">
+            <div class="li-title">${esc(a.currency).toUpperCase()} · ${esc(shortAddr(a.address))}</div>
+            <div class="li-sub">${esc(a.date)}</div>
+          </div>
+          <span class="tag tag-high">${a.risk.toFixed(0)}%</span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function renderHomeWallets(wallets){
+  const box = document.getElementById('home-wallets-box');
+  if (!wallets || !wallets.length){ box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        <span>💼 Топ-кошельки</span>
+        <button class="btn btn-outline btn-xs" onclick="switchTab('wallets',document.querySelectorAll('.nav-btn')[2])">Все →</button>
+      </div>
+      ${wallets.slice(0,4).map(w => `
+        <div class="list-item" style="cursor:pointer;" onclick="goToAml('${esc(w.address)}','${esc(w.currency)}')">
+          <div class="li-main">
+            <div class="li-title">${esc(w.display)}</div>
+            <div class="li-sub mono">${esc(shortAddr(w.address))}</div>
+          </div>
+          <div class="ta-r">
+            <div class="fw-700">${fmtNum(w.balance)}</div>
+            <div class="fs-11 text-muted">${fmtUsd(w.usd)}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function renderHomeBlacklist(events){
+  const box = document.getElementById('home-blacklist');
+  if (!events || !events.length){ box.innerHTML = '<div class="empty"><div class="em-ico">🌊</div><div class="em-title">Пока пусто</div></div>'; return; }
+  box.innerHTML = events.slice(0,3).map(e => feedItemHtml(e)).join('');
+}
+
+function feedItemHtml(e){
+  const kindMap = {
+    pending:   { cls: 'tag-med',  label: '⚠️ Готовится' },
+    frozen:    { cls: 'tag-high', label: '🚫 Заморожен' },
+    destroyed: { cls: 'tag-purple', label: '🔥 Сожжён' },
+  };
+  const k = kindMap[e.kind] || { cls:'tag-info', label: e.kind };
+  return `
+    <div class="feed-item">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <span class="tag ${k.cls}">${k.label}</span>
+          <span class="tag tag-info">${esc(e.network||'')}</span>
+        </div>
+        <span class="fs-11 text-muted">${esc(e.date_str||'')}</span>
+      </div>
+      <div class="mono fs-12 mt-6">${esc(e.address||'')}</div>
+      <div class="row" style="justify-content:space-between;margin-top:8px;">
+        <span class="fs-12">${e.amount ? '<b>' + fmtNum(e.amount,2) + '</b> ' + esc(e.symbol||'') : ''}</span>
+        <button class="btn btn-outline btn-xs" onclick="goToAml('${esc(e.address||'')}','${e.network==='ERC20'?'usdt_erc20':'usdt_trc20'}')">🔍 AML</button>
+      </div>
+    </div>`;
+}
+
+function goToAml(addr, cur){
+  haptic();
+  switchTab('aml', document.querySelectorAll('.nav-btn')[1]);
+  document.getElementById('aml-address').value = addr;
+  document.getElementById('aml-currency').value = cur || 'usdt_trc20';
+  runAmlCheck();
+}
+
+/* ============================================================
+   AML
+============================================================ */
+let netInstance = null;
+let graphState = { nodes: [], edges: [], allNodes: [], allEdges: [], activeTypes: new Set(), minAmount: 0, timeMax: 0, timeMin: 0 };
+let lastAmlResult = null;
+
+async function runAmlCheck(){
+  const address = document.getElementById('aml-address').value.trim();
+  const currency = document.getElementById('aml-currency').value;
+  if (!address){ toast('Введите адрес', 'warn'); return; }
+  haptic('medium');
+
+  const btn = document.getElementById('btn-run-aml');
+  btn.disabled = true; btn.textContent = '⏳ Анализ...';
+  const ctr = document.getElementById('aml-result-container');
+  ctr.style.display = 'block';
+
+  try {
+    const data = await apiFetch('/api/aml/check', { method:'POST', body: JSON.stringify({ address, currency }) });
+    lastAmlResult = data;
+    renderAmlResult(data);
+    hapticNotify('success');
+  } catch(e){
+    toast('Ошибка: ' + e.message, 'error');
+    hapticNotify('error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Запустить анализ';
+  }
+}
+
+function renderAmlResult(d){
+  document.getElementById('res-cur').textContent = d.currency_display || d.currency;
+  document.getElementById('res-addr').textContent = d.address;
+  document.getElementById('res-bal').textContent = fmtNum(d.balance);
+  document.getElementById('res-usd').textContent = fmtUsd(d.balance_usd);
+  document.getElementById('res-tx').textContent = d.tx_count || 0;
+
+  const r = d.risk_score || 0;
+  const bar = document.getElementById('gauge-bar');
+  const C = 2 * Math.PI * 52;
+  const color = r >= 70 ? '#ef4444' : r >= 35 ? '#f59e0b' : '#10b981';
+  bar.style.stroke = color;
+  bar.style.strokeDasharray = C;
+  bar.style.strokeDashoffset = C * (1 - r/100);
+
+  const sv = document.getElementById('res-score');
+  sv.textContent = r.toFixed(0) + '%';
+  sv.style.color = color;
+  document.getElementById('res-level').textContent = r>=70?'HIGH':r>=35?'MEDIUM':'LOW';
+  document.getElementById('res-level').style.color = color;
+
+  // Signals
+  const sBox = document.getElementById('res-signals');
+  const parts = [];
+  (d.signals||[]).forEach(s => parts.push(`<span class="tag tag-high">${esc(s)}</span>`));
+  (d.labels||[]).forEach(l => {
+    const cls = l.tier==='high'?'tag-high':l.tier==='medium'?'tag-med':'tag-low';
+    parts.push(`<span class="tag ${cls}">${esc(l.category)}: ${Number(l.percent||0).toFixed(1)}%</span>`);
+  });
+  sBox.innerHTML = parts.length ? parts.join('') : '<span class="tag tag-low">✅ Чистый кошелёк</span>';
+
+  // Breakdown
+  const bBox = document.getElementById('res-breakdown');
+  const labels = d.labels || [];
+  if (labels.length){
+    bBox.innerHTML = labels
+      .sort((a,b)=> (b.percent||0)-(a.percent||0))
+      .slice(0,10)
+      .map(l => {
+        const pct = Number(l.percent||0);
+        const color = l.tier==='high'?'#ef4444':l.tier==='medium'?'#f59e0b':'#10b981';
+        return `<div class="mb-10">
+          <div class="row" style="justify-content:space-between;">
+            <span class="fs-12">${esc(l.category)}</span>
+            <b class="fs-12" style="color:${color}">${pct.toFixed(1)}%</b>
+          </div>
+          <div style="height:6px;background:var(--card2);border-radius:99px;margin-top:5px;overflow:hidden;">
+            <div style="height:100%;width:${Math.min(pct,100)}%;background:linear-gradient(90deg,${color},${color}80);border-radius:99px;transition:width .6s;"></div>
+          </div>
+        </div>`;
+      }).join('');
+  } else {
+    bBox.innerHTML = '<div class="fs-12 text-muted ta-c">Нет факторов риска</div>';
+  }
+
+  // Assets
+  const aBox = document.getElementById('res-assets');
+  const aCard = document.getElementById('res-assets-card');
+  const assets = d.assets || {};
+  const rows = [];
+  if (assets.trx) rows.push(['TRX', assets.trx]);
+  (assets.trc20||[]).forEach(t => rows.push([t.symbol, t.balance]));
+  (assets.trc10||[]).forEach(t => rows.push([t.symbol, t.balance]));
+  if (rows.length){
+    aCard.style.display = 'block';
+    aBox.innerHTML = rows.slice(0,15).map(([s,b])=>`<div class="asset-row"><span class="ar-l">${esc(s)}</span><span class="ar-r">${fmtNum(b)}</span></div>`).join('');
+  } else {
+    aCard.style.display = 'none';
+  }
+
+  // Explorer link
+  const exp = document.getElementById('res-explorer');
+  if (d.explorer_url){ exp.href = d.explorer_url; exp.style.display='inline-flex'; } else exp.style.display='none';
+
+  // Graph
+  renderGraph(d.graph || { nodes:[], edges:[] });
+}
+
+/* ============================================================
+   VIS GRAPH
+============================================================ */
+function renderGraph(g){
+  graphState.allNodes = g.nodes || [];
+  graphState.allEdges = g.edges || [];
+  graphState.activeTypes = new Set();
+
+  const typeChips = [
+    { k:'sanction', label:'⛔ Санкции', color:'#D90429' },
+    { k:'scam',     label:'💀 Скам',    color:'#F77F00' },
+    { k:'mixer',    label:'🌀 Миксер',  color:'#00B4D8' },
+    { k:'cex',      label:'🏦 CEX',     color:'#3A86FF' },
+    { k:'darknet',  label:'🌑 Даркнет', color:'#5A189A' },
+    { k:'large',    label:'💎 Крупные', color:'#2A9D8F' },
+    { k:'transit',  label:'↔️ Транзит', color:'#FFD166' },
+    { k:'center',   label:'🎯 Центр',   color:'#E63946' },
+  ];
+  document.getElementById('graph-chips').innerHTML =
+    typeChips.map(c => `<div class="chip" data-type="${c.k}" onclick="toggleGraphType(this,'${c.k}')">${c.label}</div>`).join('');
+
+  // Timeline slider init
+  const ts = (g.edges||[]).map(e => e.timestamp).filter(t => t>0);
+  const tMin = ts.length ? Math.min(...ts) : 0;
+  const tMax = ts.length ? Math.max(...ts) : 0;
+  graphState.timeMin = tMin; graphState.timeMax = tMax;
+  const tSlider = document.getElementById('graph-time');
+  tSlider.min = tMin; tSlider.max = tMax || 1; tSlider.value = tMax || 1;
+
+  applyGraphFilters();
+}
+
+function toggleGraphType(el, type){
+  haptic();
+  if (graphState.activeTypes.has(type)){
+    graphState.activeTypes.delete(type);
+    el.classList.remove('active');
+  } else {
+    graphState.activeTypes.add(type);
+    el.classList.add('active');
+  }
+  applyGraphFilters();
+}
+
+function applyGraphFilters(){
+  const minAmount = +document.getElementById('graph-min-amount').value || 0;
+  const timeVal   = +document.getElementById('graph-time').value || graphState.timeMax;
+  document.getElementById('graph-min-amount-val').textContent = '$' + minAmount.toLocaleString();
+  document.getElementById('graph-time-val').textContent =
+    !graphState.timeMax || timeVal >= graphState.timeMax ? 'всё' :
+    timeAgo(Math.floor(timeVal/1000)) + ' назад';
+
+  const activeTypes = graphState.activeTypes;
+  const hasTypeFilter = activeTypes.size > 0;
+
+  const visibleIds = new Set();
+  const nodes = graphState.allNodes.filter(n => {
+    if (hasTypeFilter && !activeTypes.has(n.type)) return false;
+    if (n.type === 'center') return true;
+    const edgeTotal = graphState.allEdges
+      .filter(e => e.from===n.id || e.to===n.id)
+      .reduce((s,e)=> s + (e.amount||0), 0);
+    if (minAmount > 0 && edgeTotal < minAmount) return false;
+    visibleIds.add(n.id);
+    return true;
+  });
+
+  // always include center
+  const center = graphState.allNodes.find(n => n.type==='center');
+  if (center) visibleIds.add(center.id);
+
+  const edges = graphState.allEdges.filter(e => {
+    if (!visibleIds.has(e.from) || !visibleIds.has(e.to)) return false;
+    if (e.amount && minAmount > 0 && e.amount < minAmount) return false;
+    if (e.timestamp && timeVal < graphState.timeMax && e.timestamp > timeVal) return false;
+    return true;
+  });
+
+  drawGraph(nodes, edges);
+}
+
+function drawGraph(nodes, edges){
+  const container = document.getElementById('graph-box');
+  if (!netInstance){
+    netInstance = new vis.Network(
+      container,
+      { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) },
+      {
+        nodes: {
+          shape: 'dot', scaling: { min: 12, max: 34 },
+          font: { size: 10, color: '#e2e8f0', strokeWidth: 3, strokeColor: '#0a0e14' },
+          borderWidth: 2,
+        },
+        edges: {
+          color: { color: '#334155', highlight: '#ef4444', hover: '#64748b' },
+          arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+          font: { size: 9, color: '#94a3b8', strokeWidth: 0, background: 'rgba(10,14,20,0.85)' },
+          smooth: { type: 'continuous' },
+        },
+        physics: { stabilization: { iterations: 180 }, barnesHut: { gravitationalConstant: -7000, springLength: 130 } },
+        interaction: { hover: true, tooltipDelay: 100, hideEdgesOnDrag: true },
+      }
+    );
+    netInstance.on('click', onGraphClick);
+    setTimeout(()=>{ netInstance.setOptions({ physics: { enabled: false } }); }, 1400);
+  } else {
+    netInstance.setData({ nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) });
+  }
+}
+
+function onGraphClick(p){
+  const popup = document.getElementById('node-popup');
+  if (!p.nodes.length){ popup.style.display='none'; return; }
+  const n = graphState.allNodes.find(x => x.id === p.nodes[0]);
+  if (!n) return;
+  popup.style.display = 'block';
+  popup.innerHTML = `
+    <div class="row" style="justify-content:space-between; align-items:flex-start;">
+      <div style="flex:1; min-width:0;">
+        <span class="tag tag-info">${esc(n.category||'Узел')}</span>
+        ${n.hops ? `<span class="tag tag-low">${n.hops} hop</span>` : ''}
+        <div class="mono fs-12 mt-6">${esc(n.id)}</div>
+        ${n.amount ? `<div class="fs-12 mt-6">Сумма: <b>${fmtUsd(n.amount)}</b></div>` : ''}
+      </div>
+      <button class="btn btn-outline btn-xs" onclick="goToAml('${esc(n.id)}','${esc(document.getElementById('aml-currency').value)}')">🔍 AML</button>
+    </div>`;
+}
+
+function fitGraph(){ if (netInstance) netInstance.fit({ animation: { duration: 500 } }); }
+
+/* ============================================================
+   AML SHARE / PDF
+============================================================ */
+function downloadAmlPdf(){
+  if (!lastAmlResult){ toast('Сначала сделайте проверку', 'warn'); return; }
+  const address = lastAmlResult.address;
+  const cur = lastAmlResult.currency;
+  // /api/aml/{id}/pdf требует report_id. Если нет — просто открываем AML-запрос, где бот вернёт PDF.
+  // Здесь пробуем найти последний report в истории. Для упрощения — используем свежий history.
+  apiFetch('/api/aml/history?limit=20').then(h => {
+    const match = (h.history||[]).find(x => x.address===address && x.currency===cur);
+    if (match){
+      const url = API_BASE() + `/api/aml/${match.id}/pdf` + (tg?.initData ? '' : '?dev_user_id='+devUid);
+      tg ? tg.openLink(url) : window.open(url, '_blank');
+    } else {
+      toast('PDF будет доступен из истории', 'info');
     }
+  }).catch(()=>{ toast('Не удалось получить PDF', 'error'); });
+}
 
-    function getApiBase() {
-        return localStorage.getItem('finbot_api_url') || 'http://localhost:8080';
+async function openShareCard(){
+  if (!lastAmlResult){ toast('Сначала сделайте проверку','warn'); return; }
+  openSheet('share');
+  const img = document.getElementById('share-img');
+  img.src = '';
+  const url = API_BASE() + `/api/aml/share-card?address=${encodeURIComponent(lastAmlResult.address)}&currency=${encodeURIComponent(lastAmlResult.currency)}` + (tg?.initData?'':'&dev_user_id='+devUid);
+  try {
+    const res = await fetch(url, { headers: tg?.initData ? {'X-Telegram-Init-Data': tg.initData} : {} });
+    const blob = await res.blob();
+    img.src = URL.createObjectURL(blob);
+    img.dataset.blob = URL.createObjectURL(blob);
+  } catch(e){
+    toast('Ошибка карточки: ' + e.message, 'error');
+  }
+}
+function downloadShareImg(){
+  const img = document.getElementById('share-img');
+  if (!img.src) return;
+  const a = document.createElement('a');
+  a.href = img.src; a.download = `aml_${Date.now()}.png`; a.click();
+  haptic();
+}
+function shareToTelegram(){
+  const img = document.getElementById('share-img');
+  if (!img.src) return;
+  // Telegram-шаринг ссылки
+  const text = lastAmlResult ? `AML: ${lastAmlResult.address} — риск ${lastAmlResult.risk_score}%` : 'AML-отчёт';
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(img.src)}&text=${encodeURIComponent(text)}`;
+  if (tg) tg.openTelegramLink(shareUrl); else window.open(shareUrl, '_blank');
+}
+
+/* ============================================================
+   BLACKLIST + SSE
+============================================================ */
+let blState = { kind: 'all', network: null, list: [] };
+let sseSource = null;
+
+function setBlFilter(el, kind){
+  haptic();
+  document.querySelectorAll('[data-bl-kind]').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  blState.kind = kind;
+  loadBlacklist();
+}
+function setBlNet(el, net){
+  haptic();
+  if (blState.network === net){ blState.network = null; el.classList.remove('active'); }
+  else {
+    document.querySelectorAll('[data-bl-net]').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    blState.network = net;
+  }
+  loadBlacklist();
+}
+
+async function loadBlacklist(){
+  const box = document.getElementById('bl-feed-list');
+  if (!box.innerHTML.trim() || box.innerHTML.includes('Загрузка')){
+    box.innerHTML = '<div class="skel skel-line w80"></div><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div>';
+  }
+  try {
+    const q = [];
+    if (blState.kind !== 'all') q.push('kind='+blState.kind);
+    if (blState.network) q.push('network='+blState.network);
+    q.push('limit=30');
+    const data = await apiFetch('/api/blacklist?' + q.join('&'));
+
+    document.getElementById('bl-pending').textContent   = data.stats.pending || 0;
+    document.getElementById('bl-frozen').textContent    = data.stats.frozen || 0;
+    document.getElementById('bl-destroyed').textContent = data.stats.destroyed || 0;
+
+    if (!data.items.length){
+      box.innerHTML = '<div class="empty"><div class="em-ico">🌊</div><div class="em-title">Событий нет</div><div class="em-sub">Измените фильтр или подождите новое событие</div></div>';
+      return;
     }
+    blState.list = data.items;
+    box.innerHTML = data.items.map(e => feedItemHtml(e)).join('');
+  } catch(e){
+    box.innerHTML = '<div class="text-danger fs-12">Ошибка: ' + esc(e.message) + '</div>';
+  }
+}
 
-    function promptApiUrl() {
-        const cur = getApiBase();
-        const next = prompt('Введите HTTPS URL вашего FastAPI сервера:', cur);
-        if (next) {
-            localStorage.setItem('finbot_api_url', next.trim().replace(/\/$/, ''));
-            location.reload();
-        }
-    }
-
-    async function apiFetch(path, options = {}) {
-        const headers = options.headers || {};
-        headers['Content-Type'] = 'application/json';
-        if (tg?.initData) {
-            headers['X-Telegram-Init-Data'] = tg.initData;
-        }
-        const devUid = urlParams.get('user_id') || '640831993';
-        const sep = path.includes('?') ? '&' : '?';
-        const url = `${getApiBase()}${path}${tg?.initData ? '' : sep + 'dev_user_id=' + devUid}`;
-        const res = await fetch(url, { ...options, headers });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({ detail: res.statusText }));
-            throw new Error(err.detail || 'Ошибка запроса');
-        }
-        return await res.json();
-    }
-
-    function switchTab(name, btn) {
-        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-' + name).classList.add('active');
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-
-        if (name === 'blacklist') loadBlacklist('all');
-        if (name === 'wallets') loadWallets();
-        if (name === 'rates') loadRates();
-        if (name === 'profile') loadProfile();
-    }
-
-    // ---------- 1. AML & VIS.JS GRAPH ----------
-    let networkInstance = null;
-
-    async function runAmlCheck(customAddr, customCur) {
-        const addrInput = document.getElementById('aml-address');
-        const curInput = document.getElementById('aml-currency');
-        const address = (customAddr || addrInput.value || '').trim();
-        const currency = customCur || curInput.value;
-        if (!address) return alert('Введите адрес кошелька');
-
-        addrInput.value = address;
-        curInput.value = currency;
-
-        const btn = document.getElementById('btn-run-aml');
-        btn.disabled = true;
-        btn.innerText = '⏳ Анализируем блокчейн и строим граф...';
-
-        try {
-            const data = await apiFetch('/api/aml/check', {
-                method: 'POST',
-                body: JSON.stringify({ address, currency })
-            });
-
-            document.getElementById('aml-result-container').style.display = 'block';
-            document.getElementById('res-cur').innerText = data.currency_display;
-            document.getElementById('res-addr').innerText = data.address;
-            document.getElementById('res-bal').innerText = data.balance;
-            document.getElementById('res-usd').innerText = '$' + data.balance_usd.toLocaleString();
-            document.getElementById('res-tx').innerText = data.tx_count;
-
-            const scoreEl = document.getElementById('res-score');
-            const levelEl = document.getElementById('res-level');
-            scoreEl.innerText = data.risk_score + '%';
-            if (data.risk_score >= 70) {
-                scoreEl.style.color = 'var(--danger)';
-                levelEl.innerText = '⛔ Высокий риск';
-            } else if (data.risk_score >= 35) {
-                scoreEl.style.color = 'var(--warn)';
-                levelEl.innerText = '⚠️ Средний риск';
-            } else {
-                scoreEl.style.color = 'var(--success)';
-                levelEl.innerText = '✅ Минимальный риск';
-            }
-
-            const sigBox = document.getElementById('res-signals');
-            sigBox.innerHTML = '';
-            (data.signals || []).forEach(s => {
-                sigBox.innerHTML += `<span class="tag tag-high">${s}</span>`;
-            });
-            (data.labels || []).forEach(l => {
-                const cls = l.tier === 'high' ? 'tag-high' : (l.tier === 'medium' ? 'tag-med' : 'tag-low');
-                sigBox.innerHTML += `<span class="tag ${cls}">${l.category}: ${l.percent.toFixed(1)}%</span>`;
-            });
-            if (!sigBox.innerHTML) {
-                sigBox.innerHTML = `<span class="tag tag-low">✅ Чистый кошелёк</span>`;
-            }
-
-            renderVisGraph(data.graph);
-        } catch (e) {
-            alert('Ошибка AML: ' + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = '🚀 Запустить глубокий анализ';
-        }
-    }
-
-    function renderVisGraph(graph) {
-        const container = document.getElementById('graph-box');
-        const nodes = new vis.DataSet(graph.nodes || []);
-        const edges = new vis.DataSet(graph.edges || []);
-        const options = {
-            nodes: {
-                shape: 'dot',
-                scaling: { min: 14, max: 36 },
-                font: { size: 11, color: '#e5e7eb', strokeWidth: 3, strokeColor: '#080b0e' },
-                borderWidth: 2
-            },
-            edges: {
-                color: { color: '#374151', highlight: '#ef4444' },
-                arrows: { to: { enabled: true, scaleFactor: 0.5 } },
-                font: { size: 9, color: '#9ca3af', strokeWidth: 0 }
-            },
-            physics: {
-                barnesHut: { gravitationalConstant: -6000, springLength: 120 }
-            }
-        };
-        networkInstance = new vis.Network(container, { nodes, edges }, options);
-        networkInstance.on('click', function(params) {
-            const popup = document.getElementById('node-popup');
-            if (params.nodes.length > 0) {
-                const n = nodes.get(params.nodes[0]);
-                popup.style.display = 'block';
-                popup.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>${n.category || 'Узел'}</b>
-                        <button class="btn btn-outline btn-sm" onclick="runAmlCheck('${n.id}')">🔍 Проверить этот узел</button>
-                    </div>
-                    <div class="mono" style="margin-top:4px; color:var(--muted);">${n.id}</div>
-                    ${n.amount ? `<div style="margin-top:4px;">Оборот / Баланс: <b>$${Number(n.amount).toLocaleString()}</b></div>` : ''}
-                `;
-            } else {
-                popup.style.display = 'none';
-            }
-        });
-    }
-
-    function fitGraph() {
-        if (networkInstance) networkInstance.fit({ animation: true });
-    }
-
-    // ---------- 2. BLACKLIST ----------
-    async function loadBlacklist(kind = 'all') {
+function startSSE(){
+  if (sseSource) return;
+  try {
+    const url = API_BASE() + '/api/events/stream' + (tg?.initData ? '' : '?dev_user_id='+devUid);
+    sseSource = new EventSource(url);
+    sseSource.onmessage = (ev) => {
+      try {
+        const items = JSON.parse(ev.data);
+        if (!items.length) return;
+        // Обновляем ленту
         const box = document.getElementById('bl-feed-list');
-        try {
-            const data = await apiFetch(`/api/blacklist?kind=${kind}&limit=25`);
-            document.getElementById('bl-pending').innerText = data.stats.pending;
-            document.getElementById('bl-frozen').innerText = data.stats.frozen;
-            document.getElementById('bl-destroyed').innerText = data.stats.destroyed;
-
-            if (!data.items.length) {
-                box.innerHTML = '<div style="color:var(--muted);">Событий не найдено</div>';
-                return;
-            }
-            box.innerHTML = data.items.map(it => {
-                const badge = it.kind === 'pending'
-                    ? '<span class="tag tag-med">⚠️ Скоро блок</span>'
-                    : (it.kind === 'destroyed' ? '<span class="tag tag-high">🔥 Сожжён</span>' : '<span class="tag tag-high">🚯 Заморожен</span>');
-                return `
-                    <div class="list-item" style="flex-direction:column; align-items:flex-start;">
-                        <div style="display:flex; justify-content:space-between; width:100%;">
-                            <div>${badge} <b>${it.symbol} (${it.network})</b></div>
-                            <span style="font-size:11px; color:var(--muted);">${it.date_str}</span>
-                        </div>
-                        <div class="mono" style="margin:4px 0;">${it.address}</div>
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <span style="font-size:12px;">Сумма: <b>${it.amount.toLocaleString()} ${it.symbol}</b></span>
-                            <button class="btn btn-outline btn-sm" onclick="openAddressInAml('${it.address}', '${it.network}')">🕸 На граф</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        } catch (e) {
-            box.innerHTML = `<div style="color:var(--danger);">Ошибка: ${e.message}</div>`;
+        for (const it of items){
+          const html = feedItemHtml({
+            kind: it.kind, address: it.address, network: it.network,
+            symbol: it.symbol, amount: 0, date_str: timeAgo(it.ts) + ' назад',
+          });
+          const el = document.createElement('div');
+          el.innerHTML = html;
+          const first = el.firstElementChild;
+          first.classList.add('new');
+          box.prepend(first);
+          setTimeout(()=> first.classList.remove('new'), 1200);
+          // Ограничим
+          while (box.children.length > 40) box.lastElementChild.remove();
         }
+        // Тост
+        toast(`🔔 ${items.length} новое событие Blacklist`, 'warn');
+        hapticNotify('warning');
+      } catch(_){}
+    };
+    sseSource.onerror = () => { /* авто-реконнект EventSource сам */ };
+  } catch(e){
+    console.warn('SSE failed:', e);
+  }
+}
+
+/* ============================================================
+   WALLETS
+============================================================ */
+async function loadWallets(){
+  const box = document.getElementById('wallets-list');
+  box.innerHTML = '<div class="skel skel-line w80"></div><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div>';
+  try {
+    // подгружаем каталог токенов один раз
+    if (!document.getElementById('add-wallet-cur').options.length){
+      try {
+        const cat = await apiFetch('/api/token/catalog');
+        document.getElementById('add-wallet-cur').innerHTML =
+          cat.tokens.map(t => `<option value="${t.id}">${esc(t.display)}</option>`).join('');
+      } catch(_){}
     }
 
-    function openAddressInAml(address, net) {
-        const cur = (net || '').toLowerCase().includes('erc') ? 'usdt_erc20' : 'usdt_trc20';
-        switchTab('aml', document.querySelectorAll('.nav-btn')[0]);
-        runAmlCheck(address, cur);
+    // портфель + список кошельков
+    const [port, wl] = await Promise.all([
+      apiFetch('/api/portfolio'),
+      apiFetch('/api/wallets'),
+    ]);
+    document.getElementById('w-portfolio-usd').textContent = fmtUsd(port.total_usd);
+    document.getElementById('w-portfolio-rub').textContent = fmtRub(port.total_rub);
+    document.getElementById('w-count').textContent = wl.wallets.length + '/10';
+
+    // distribution chips
+    document.getElementById('w-portfolio-dist').innerHTML =
+      (port.distribution||[]).slice(0,4).map(d =>
+        `<span class="tag tag-info">${esc(d.display)}: ${d.pct}%</span>`
+      ).join('');
+
+    if (!wl.wallets.length){
+      box.innerHTML = '<div class="empty"><div class="em-ico">💼</div><div class="em-title">Нет кошельков</div><div class="em-sub">Добавьте первый кошелёк, чтобы отслеживать баланс и риски</div></div>';
+      return;
     }
+    const byAddr = {};
+    (port.items||[]).forEach(i => byAddr[i.currency+'|'+i.address] = i);
 
-    // ---------- 3. КОШЕЛЬКИ ----------
-    async function loadWallets() {
-        const box = document.getElementById('wallets-list');
-        try {
-            const data = await apiFetch('/api/wallets');
-            if (!data.wallets.length) {
-                box.innerHTML = '<div style="color:var(--muted);">У вас пока нет отслеживаемых кошельков.</div>';
-                return;
-            }
-            box.innerHTML = data.wallets.map(w => `
-                <div class="list-item" style="flex-direction:column; align-items:flex-start;">
-                    <div style="display:flex; justify-content:space-between; width:100%;">
-                        <b>${w.currency_display}</b>
-                        <b>${w.balance}</b>
-                    </div>
-                    <div class="mono" style="color:var(--muted); margin:4px 0;">${w.address}</div>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn btn-outline btn-sm" onclick="switchTab('aml', document.querySelectorAll('.nav-btn')[0]); runAmlCheck('${w.address}', '${w.currency}')">🔍 AML & Граф</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteWallet('${w.currency}', '${w.address}')">🗑️ Удалить</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch (e) {
-            box.innerHTML = `<div style="color:var(--danger);">${e.message}</div>`;
-        }
-    }
+    box.innerHTML = wl.wallets.map(w => {
+      const info = byAddr[w.currency+'|'+w.address] || {};
+      return `
+        <div class="list-item" style="cursor:pointer;" onclick="openWalletSheet('${esc(w.currency)}','${esc(w.address)}')">
+          <div class="li-main">
+            <div class="li-title">${esc(w.currency_display)}</div>
+            <div class="li-sub mono">${esc(shortAddr(w.address))}</div>
+          </div>
+          <div class="ta-r">
+            <div class="fw-700">${fmtNum(w.balance)}</div>
+            <div class="fs-11 text-muted">${fmtUsd(info.usd || 0)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e){
+    box.innerHTML = '<div class="text-danger fs-12">' + esc(e.message) + '</div>';
+  }
+}
 
-    async function addWallet() {
-        const currency = document.getElementById('add-wallet-cur').value;
-        const address = document.getElementById('add-wallet-addr').value.trim();
-        if (!address) return alert('Введите адрес');
-        try {
-            await apiFetch('/api/wallets', {
-                method: 'POST',
-                body: JSON.stringify({ currency, address })
-            });
-            document.getElementById('add-wallet-addr').value = '';
-            loadWallets();
-        } catch (e) {
-            alert(e.message);
-        }
-    }
+async function addWallet(){
+  const currency = document.getElementById('add-wallet-cur').value;
+  const address = document.getElementById('add-wallet-addr').value.trim();
+  if (!address){ toast('Введите адрес', 'warn'); return; }
+  haptic();
+  try {
+    await apiFetch('/api/wallets', { method:'POST', body: JSON.stringify({ currency, address }) });
+    document.getElementById('add-wallet-addr').value = '';
+    toast('✅ Кошелёк добавлен', 'success');
+    hapticNotify('success');
+    loadWallets();
+    tabLoaded.home = 0; // перезагрузим дашборд при следующем заходе
+  } catch(e){
+    toast(e.message, 'error');
+  }
+}
 
-    async function deleteWallet(currency, address) {
-        if (!confirm('Удалить кошелёк из трекера?')) return;
-        try {
-            await apiFetch('/api/wallets', {
-                method: 'DELETE',
-                body: JSON.stringify({ currency, address })
-            });
-            loadWallets();
-        } catch (e) {
-            alert(e.message);
-        }
-    }
+/* Wallet detail sheet */
+let currentWallet = null;
+async function openWalletSheet(currency, address){
+  haptic();
+  currentWallet = { currency, address };
+  openSheet('wallet');
+  document.getElementById('w-det-addr').textContent = address;
+  document.getElementById('w-det-title').textContent = currency.toUpperCase();
+  document.getElementById('w-det-bal').textContent = '…';
+  document.getElementById('w-det-usd').textContent = '…';
+  document.getElementById('w-det-tx').textContent = '…';
+  document.getElementById('w-det-chart').innerHTML = '';
+  document.getElementById('w-det-txs').innerHTML = '<div class="skel skel-line w80"></div>';
 
-    // ---------- 4. КУРСЫ ----------
-    let cachedRates = [];
-    async function loadRates() {
-        const box = document.getElementById('rates-list');
-        try {
-            const data = await apiFetch('/api/rates');
-            cachedRates = data.raw_lines || [];
-            renderRates(cachedRates);
-        } catch (e) {
-            box.innerHTML = `<div style="color:var(--danger);">${e.message}</div>`;
-        }
-    }
+  try {
+    const [hist, txs] = await Promise.all([
+      apiFetch(`/api/wallets/history?address=${encodeURIComponent(address)}&currency=${encodeURIComponent(currency)}&days=30`),
+      apiFetch(`/api/wallets/transactions?address=${encodeURIComponent(address)}&currency=${encodeURIComponent(currency)}&limit=30`),
+    ]);
+    document.getElementById('w-det-bal').textContent = fmtNum(hist.current || 0);
+    document.getElementById('w-det-tx').textContent = txs.total || 0;
+    const usdPrice = (txs.txs[0]?.usd / (txs.txs[0]?.amount || 1)) || 0;
+    document.getElementById('w-det-usd').textContent = fmtUsd((hist.current || 0) * usdPrice);
+    renderLineChart('w-det-chart', (hist.points||[]).map(p => ({ x: p.t*1000, y: p.c })), '#6366f1');
+    renderWalletTxs(txs.txs || []);
+    document.getElementById('w-det-explorer').href =
+      hist.explorer_url || `https://tronscan.org/#/address/${address}`;
+  } catch(e){
+    toast('Ошибка: ' + e.message, 'error');
+  }
+}
 
-    function renderRates(lines) {
-        const box = document.getElementById('rates-list');
-        if (!lines.length) {
-            box.innerHTML = '<div style="color:var(--muted);">Курсы загружаются...</div>';
-            return;
-        }
-        box.innerHTML = lines.map(l => `<div class="list-item" style="padding:7px 0;"><div>${l}</div></div>`).join('');
-    }
+let txFilter = '';
+function setTxDir(el, dir){
+  haptic();
+  document.querySelectorAll('#wallet-sheet .graph-tools .chip').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  txFilter = dir;
+  if (!currentWallet) return;
+  apiFetch(`/api/wallets/transactions?address=${encodeURIComponent(currentWallet.address)}&currency=${encodeURIComponent(currentWallet.currency)}&limit=30${dir?'&direction='+dir:''}`)
+    .then(d => renderWalletTxs(d.txs||[]))
+    .catch(e => toast(e.message,'error'));
+}
 
-    function filterRates() {
-        const q = document.getElementById('rate-search').value.toLowerCase();
-        renderRates(cachedRates.filter(l => l.toLowerCase().includes(q)));
-    }
+function renderWalletTxs(txs){
+  const box = document.getElementById('w-det-txs');
+  if (!txs.length){ box.innerHTML = '<div class="empty"><div class="em-ico">📭</div><div class="em-title">Нет транзакций</div></div>'; return; }
+  box.innerHTML = txs.map(t => {
+    const isIn = t.direction === 'in';
+    return `
+      <div class="list-item">
+        <div class="li-main">
+          <div class="li-title">
+            <span style="color:${isIn?'#34d399':'#f87171'}">${isIn?'⬅️ IN':'➡️ OUT'}</span>
+            ${esc(fmtNum(t.amount))} ${esc(t.symbol||'')}
+          </div>
+          <div class="li-sub mono">${esc(shortAddr(isIn?t.from:t.to, 8, 6))} · ${esc(t.date)}</div>
+        </div>
+        <div class="ta-r">
+          <div class="fs-11 text-muted">${t.usd ? fmtUsd(t.usd) : ''}</div>
+          ${t.explorer_url ? `<a class="fs-11" href="${esc(t.explorer_url)}" target="_blank" rel="noopener">→</a>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
 
-    // ---------- 5. ПРОФИЛЬ ----------
-    async function loadProfile() {
-        try {
-            const data = await apiFetch('/api/profile');
-            document.getElementById('prof-id').innerText = data.user_id;
-            document.getElementById('prof-sub').innerText = data.subscription.name + (data.subscription.expires ? ` (${data.subscription.expires})` : '');
-            document.getElementById('prof-aml').innerText = data.aml_balance;
-            document.getElementById('prof-bonus').innerText = data.bonus_balance + ' ₽';
-            document.getElementById('prof-ref').innerText = data.referral_code;
+function amlFromWallet(){
+  if (!currentWallet) return;
+  closeSheet('wallet');
+  goToAml(currentWallet.address, currentWallet.currency);
+}
 
-            const hBox = document.getElementById('prof-history');
-            if (!data.history.length) {
-                hBox.innerHTML = '<div style="color:var(--muted);">Проверок пока нет.</div>';
-                return;
-            }
-            hBox.innerHTML = data.history.map(h => `
-                <div class="list-item">
-                    <div>
-                        <div class="mono">${h.address.slice(0, 10)}…${h.address.slice(-6)}</div>
-                        <div style="font-size:11px; color:var(--muted);">${h.currency.toUpperCase()} · ${h.date}</div>
-                    </div>
-                    <button class="btn btn-outline btn-sm" onclick="switchTab('aml', document.querySelectorAll('.nav-btn')[0]); runAmlCheck('${h.address}', '${h.currency}')">
-                        🎯 ${h.risk_points.toFixed(1)}%
-                    </button>
-                </div>
-            `).join('');
-        } catch (e) {
-            console.error(e);
-        }
-    }
+/* ============================================================
+   RATES
+============================================================ */
+let cachedRates = [];
+let ratesRaw = [];
+let historyCache = {};
 
-    // Автозапуск проверки, если открыли Mini App по кнопке с конкретным адресом (?addr=...&cur=...)
-    window.addEventListener('DOMContentLoaded', () => {
-        const initAddr = urlParams.get('addr');
-        const initCur = urlParams.get('cur') || 'usdt_trc20';
-        if (initAddr) {
-            runAmlCheck(initAddr, initCur);
-        }
+async function loadRates(){
+  const box = document.getElementById('rates-list');
+  box.innerHTML = '<div class="skel skel-line w80"></div><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div>';
+  try {
+    const data = await apiFetch('/api/rates');
+    cachedRates = (data.items || []).slice(0, 60);
+    renderRates(cachedRates);
+
+    // Подтянем sparklines для топ-8 пар (в фоне)
+    const topPairs = ['USD/RUB','EUR/RUB','BTC/USDT','ETH/USDT','USDT/RUB','TON/USDT'];
+    topPairs.forEach(async pair => {
+      if (historyCache[pair]) return;
+      try {
+        const h = await apiFetch(`/api/rates/history?pair=${encodeURIComponent(pair)}&days=7&interval=1h`);
+        historyCache[pair] = h.points || [];
+        updateSparkline(pair, historyCache[pair]);
+      } catch(_){}
     });
+  } catch(e){
+    box.innerHTML = '<div class="text-danger fs-12">' + esc(e.message) + '</div>';
+  }
+}
+
+function renderRates(items){
+  const box = document.getElementById('rates-list');
+  if (!items.length){ box.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных</div></div>'; return; }
+  box.innerHTML = items.map(it => `
+    <div class="list-item" style="cursor:pointer;" onclick="openPairSheet('${esc(it.pair)}','${esc(it.source)}')">
+      <div class="li-main">
+        <div class="li-title">${esc(it.pair)}</div>
+        <div class="li-sub">${esc(it.source)}</div>
+      </div>
+      <canvas class="spark" data-pair="${esc(it.pair)}"></canvas>
+      <div class="ta-r" style="min-width:74px;">
+        <div class="fw-700">${Number(it.value).toFixed(it.value > 100 ? 2 : 4)}</div>
+      </div>
+    </div>
+  `).join('');
+  // Пересчитываем спарклайны из кэша
+  Object.keys(historyCache).forEach(pair => updateSparkline(pair, historyCache[pair]));
+}
+
+function updateSparkline(pair, points){
+  const c = document.querySelector(`canvas.spark[data-pair="${CSS.escape(pair)}"]`);
+  if (!c || !points || points.length < 2) return;
+  drawSparkline(c, points, '#6366f1');
+}
+
+function filterRates(){
+  const q = document.getElementById('rate-search').value.toLowerCase();
+  renderRates(cachedRates.filter(x => (x.pair + ' ' + x.source).toLowerCase().includes(q)));
+}
+
+/* Convert */
+async function doConvert(){
+  const f = document.getElementById('conv-from').value.trim().toUpperCase();
+  const t = document.getElementById('conv-to').value.trim().toUpperCase();
+  const a = parseFloat(document.getElementById('conv-amount').value) || 0;
+  if (!f || !t){ toast('Укажите валюты', 'warn'); return; }
+  const out = document.getElementById('conv-result');
+  out.textContent = '🔄 Курс...';
+  try {
+    const d = await apiFetch(`/api/rates/convert?from_curr=${encodeURIComponent(f)}&to_curr=${encodeURIComponent(t)}&amount=${a}`);
+    out.innerHTML = `<b>${a} ${esc(f)}</b> = <b style="color:var(--accent)">${Number(d.result).toFixed(4)} ${esc(t)}</b><br><span class="fs-11 text-muted">1 ${esc(f)} = ${Number(d.rate).toFixed(6)} ${esc(t)} · ${esc(d.source||'')}</span>`;
+    haptic();
+  } catch(e){
+    out.innerHTML = '<span class="text-danger">' + esc(e.message) + '</span>';
+  }
+}
+
+/* Pair detail sheet */
+async function openPairSheet(pair, source){
+  haptic();
+  openSheet('pair');
+  document.getElementById('pair-title').textContent = pair;
+  document.getElementById('pair-sub').textContent = source || '';
+  document.getElementById('pair-chart').innerHTML = '';
+  document.getElementById('pair-forecast').innerHTML = '<div class="skel skel-line w80"></div>';
+
+  try {
+    const [hist, fore] = await Promise.all([
+      apiFetch(`/api/rates/history?pair=${encodeURIComponent(pair)}&days=30&interval=1d`),
+      apiFetch(`/api/rates/forecast?pair=${encodeURIComponent(pair)}&forecast_days=7`).catch(()=>({forecast:[]})),
+    ]);
+    renderLineChart('pair-chart', (hist.points||[]).map(p => ({ x: p.t*1000, y: p.c })), '#6366f1');
+
+    const f = fore.forecast || [];
+    if (f.length){
+      const first = f[0].c, last = f[f.length-1].c;
+      const delta = ((last - first) / first) * 100;
+      document.getElementById('pair-forecast').innerHTML = `
+        <div class="row" style="justify-content:space-between;">
+          <span class="fs-12 text-muted">Прогноз на 7 дней</span>
+          <b class="${delta>=0?'text-success':'text-danger'}">${delta>=0?'+':''}${delta.toFixed(2)}%</b>
+        </div>
+        <div class="fs-12 mt-6">Прогноз к ${new Date(f[f.length-1].t*1000).toLocaleDateString('ru-RU')}: <b>${Number(last).toFixed(4)}</b></div>`;
+    } else {
+      document.getElementById('pair-forecast').innerHTML = '<div class="fs-12 text-muted ta-c">Прогноз недоступен</div>';
+    }
+    haptic();
+  } catch(e){
+    toast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+async function createAlertFromPair(){
+  const pair = document.getElementById('pair-title').textContent;
+  const source = document.getElementById('pair-sub').textContent || 'Investing';
+  const tgt = prompt('Целевое значение курса:', '');
+  if (!tgt) return;
+  const dir = confirm('OK = выше цели · Отмена = ниже цели') ? 'above' : 'below';
+  try {
+    await apiFetch('/api/alerts', { method:'POST', body: JSON.stringify({ source, pair, target: parseFloat(tgt), direction: dir }) });
+    toast('🔔 Алерт создан', 'success'); hapticNotify('success');
+  } catch(e){ toast(e.message,'error'); }
+}
+
+/* ============================================================
+   PROFILE
+============================================================ */
+async function openProfileSheet(){
+  haptic();
+  openSheet('profile');
+  document.getElementById('prof-history').innerHTML = '<div class="skel skel-line w80"></div>';
+  try {
+    const d = await apiFetch('/api/profile');
+    document.getElementById('prof-id').textContent = d.user_id;
+    document.getElementById('prof-id-sub').textContent = 'ID ' + d.user_id;
+    document.getElementById('prof-sub').textContent = d.subscription.name + (d.subscription.expires ? ` · ${d.subscription.expires}` : '');
+    document.getElementById('prof-aml').textContent = d.aml_balance;
+    document.getElementById('prof-bonus').textContent = d.bonus_balance + ' ₽';
+    document.getElementById('prof-ref').textContent = d.referral_code;
+
+    const h = d.history || [];
+    document.getElementById('prof-history').innerHTML = !h.length
+      ? '<div class="empty"><div class="em-ico">📭</div><div class="em-title">Проверок нет</div></div>'
+      : h.map(x => `
+        <div class="list-item" style="cursor:pointer;" onclick="closeSheet('profile'); goToAml('${esc(x.address)}','${esc(x.currency)}')">
+          <div class="li-main">
+            <div class="li-title mono">${esc(shortAddr(x.address, 10, 6))}</div>
+            <div class="li-sub">${esc(x.currency.toUpperCase())} · ${esc(x.date)}</div>
+          </div>
+          <span class="tag ${x.risk_points>=70?'tag-high':x.risk_points>=35?'tag-med':'tag-low'}">${x.risk_points.toFixed(0)}%</span>
+        </div>
+      `).join('');
+  } catch(e){
+    toast(e.message, 'error');
+  }
+}
+
+function shareReferral(){
+  const code = document.getElementById('prof-ref').textContent;
+  const url = `https://t.me/${(window.Telegram?.WebApp?.initDataUnsafe?.bot_username) || 'your_bot'}?start=ref_${code}`;
+  const text = `Попробуй FinBot — терминал AML и криптотрекинга`;
+  const share = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  if (tg) tg.openTelegramLink(share); else window.open(share, '_blank');
+}
+
+/* ============================================================
+   SEARCH
+============================================================ */
+function openSearch(){
+  haptic();
+  openSheet('search');
+  setTimeout(()=>document.getElementById('search-input').focus(), 200);
+}
+async function doSearch(){
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const box = document.getElementById('search-results');
+  box.innerHTML = '<div class="skel skel-line w80"></div>';
+  try {
+    const r = await apiFetch(`/api/search?q=${encodeURIComponent(q)}`);
+    if (r.type === 'wallet'){
+      box.innerHTML = `
+        <div class="card">
+          <div class="fs-12 text-muted mb-6">Найден кошелёк</div>
+          <div class="mono fs-12">${esc(r.address)}</div>
+          <button class="btn btn-primary mt-10" onclick="closeSheet('search'); goToAml('${esc(r.address)}','${esc(r.currency)}')">🔍 AML-проверка</button>
+        </div>`;
+    } else if (r.type === 'tx'){
+      box.innerHTML = `<div class="card"><div class="fs-12 text-muted mb-6">Найдена транзакция</div><div class="mono fs-12">${esc(r.hash)}</div></div>`;
+    } else if (r.text){
+      box.innerHTML = `<div class="card"><div class="fs-12">${r.text}</div></div>`;
+    } else {
+      box.innerHTML = '<div class="empty"><div class="em-ico">🔍</div><div class="em-title">Ничего не найдено</div></div>';
+    }
+  } catch(e){ box.innerHTML = '<div class="text-danger fs-12">' + esc(e.message) + '</div>'; }
+}
+
+/* ============================================================
+   CHARTS (canvas)
+============================================================ */
+function drawSparkline(canvas, points, color){
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 60, h = canvas.clientHeight || 26;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  if (points.length < 2) return;
+  const vals = points.map(p => p.c ?? p.y ?? p);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max-min || 1;
+  ctx.beginPath();
+  vals.forEach((v, i) => {
+    const x = (i/(vals.length-1)) * w;
+    const y = h - ((v-min)/range) * (h - 2) - 1;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, color + '55'); g.addColorStop(1, color + '00');
+  ctx.fillStyle = g; ctx.fill();
+}
+
+function renderLineChart(id, pts, color){
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 400;
+  const h = canvas.clientHeight || 180;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  if (!pts || pts.length < 2){ ctx.fillStyle='#64748b'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillText('Нет данных', w/2, h/2); return; }
+
+  const pad = { l: 34, r: 8, t: 10, b: 20 };
+  const W = w - pad.l - pad.r;
+  const H = h - pad.t - pad.b;
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+  const xmin = Math.min(...xs), xmax = Math.max(...xs);
+  const ymin = Math.min(...ys), ymax = Math.max(...ys);
+  const xr = xmax-xmin || 1, yr = ymax-ymin || 1;
+
+  // grid
+  ctx.strokeStyle = '#1e2937'; ctx.lineWidth = 1;
+  ctx.font = '10px sans-serif'; ctx.fillStyle = '#64748b'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 3; i++){
+    const y = pad.t + H * i/3;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+    const val = ymax - (yr * i/3);
+    ctx.fillText(val > 100 ? val.toFixed(2) : val.toFixed(4), pad.l - 4, y + 3);
+  }
+
+  // line
+  ctx.beginPath();
+  pts.forEach((p, i) => {
+    const x = pad.l + ((p.x - xmin)/xr) * W;
+    const y = pad.t + H - ((p.y - ymin)/yr) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+
+  // fill
+  ctx.lineTo(pad.l + W, pad.t + H); ctx.lineTo(pad.l, pad.t + H); ctx.closePath();
+  const g = ctx.createLinearGradient(0, pad.t, 0, pad.t + H);
+  g.addColorStop(0, color + '44'); g.addColorStop(1, color + '00');
+  ctx.fillStyle = g; ctx.fill();
+}
+
+/* ============================================================
+   SHEETS
+============================================================ */
+function openSheet(name){
+  document.getElementById(name + '-backdrop').classList.add('show');
+  document.getElementById(name + '-sheet').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet(name){
+  document.getElementById(name + '-backdrop').classList.remove('show');
+  document.getElementById(name + '-sheet').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   API URL SETTINGS
+============================================================ */
+function promptApiUrl(){
+  const cur = API_BASE();
+  const next = prompt('URL FastAPI сервера:', cur);
+  if (next){
+    localStorage.setItem('finbot_api_url', next.trim().replace(/\/$/, ''));
+    toast('Сохранено, перезагрузка...', 'success');
+    setTimeout(()=>location.reload(), 500);
+  }
+}
+
+/* ============================================================
+   AUTO-RUN / INIT
+============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  // URL params: ?addr=...&cur=...
+  const addr = params.get('addr');
+  const cur = params.get('cur') || 'usdt_trc20';
+  if (addr){
+    switchTab('aml', document.querySelectorAll('.nav-btn')[1]);
+    setTimeout(()=>{ document.getElementById('aml-address').value = addr; runAmlCheck(); }, 250);
+  } else {
+    loadHome();
+  }
+});
+
+// Pull-to-refresh (базовый)
+let ptStartY = 0, ptPulling = false;
+document.addEventListener('touchstart', (e) => {
+  if (window.scrollY <= 0) { ptStartY = e.touches[0].clientY; ptPulling = true; }
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (!ptPulling) return;
+  const dy = e.touches[0].clientY - ptStartY;
+  if (dy > 90 && window.scrollY <= 0){
+    ptPulling = false;
+    haptic();
+    const active = document.querySelector('.tab-view.active')?.id;
+    if (active === 'tab-home') loadHome();
+    else if (active === 'tab-blacklist') loadBlacklist();
+    else if (active === 'tab-wallets') loadWallets();
+    else if (active === 'tab-rates') loadRates();
+    toast('🔄 Обновлено', 'success', 1200);
+  }
+}, { passive: true });
+document.addEventListener('touchend', () => { ptPulling = false; });
+
+// prevent body scroll behind sheet
+document.addEventListener('gesturestart', (e) => e.preventDefault());
 </script>
 </body>
 </html>
