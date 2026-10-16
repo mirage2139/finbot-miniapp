@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FinBot — AML & Crypto Terminal</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg: #0c1014;
+            --card: #131922;
+            --card-border: #1f2937;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --success: #10b981;
+            --text: #f3f4f6;
+            --muted: #9ca3af;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0 0 76px 0;
+            background: var(--bg); color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+        }
+        header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(12, 16, 20, 0.92); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .badge-live {
+            background: #10b98120; color: var(--success); border: 1px solid #10b98150;
+            font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+        }
+        .container { padding: 14px 16px; }
+        .tab-view { display: none; }
+        .tab-view.active { display: block; animation: fadeIn 0.18s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 14px; margin-bottom: 12px;
+        }
+        .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0; }
+
+        input, select {
+            width: 100%; background: #0c1014; border: 1px solid var(--card-border);
+            color: var(--text); padding: 11px 12px; border-radius: 8px; font-size: 13px;
+            outline: none; margin-bottom: 10px;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        .btn {
+            width: 100%; background: var(--accent); color: #fff; border: none;
+            padding: 11px 14px; border-radius: 8px; font-weight: 600; font-size: 13px;
+            cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 6px;
+        }
+        .btn:active { opacity: 0.85; }
+        .btn-outline { background: #1f2937; border: 1px solid #374151; color: var(--text); }
+        .btn-sm { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-danger { background: #ef444420; color: var(--danger); border: 1px solid #ef444450; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .stat-pill {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 10px; text-align: center;
+        }
+        .stat-pill span { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+        .stat-pill b { font-size: 16px; }
+
+        .tag {
+            display: inline-block; padding: 3px 8px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; margin: 0 4px 4px 0;
+        }
+        .tag-high { background: #ef444425; color: #f87171; border: 1px solid #ef444450; }
+        .tag-med { background: #f59e0b25; color: #fbbf24; border: 1px solid #f59e0b50; }
+        .tag-low { background: #10b98125; color: #34d399; border: 1px solid #10b98150; }
+
+        #graph-box {
+            width: 100%; height: 340px; background: #080b0e;
+            border: 1px solid var(--card-border); border-radius: 10px; position: relative;
+        }
+        #node-popup {
+            display: none; margin-top: 8px; padding: 10px;
+            background: #0e131a; border: 1px solid #283548; border-radius: 8px; font-size: 12px;
+        }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 12px; }
+
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid var(--card-border); gap: 8px;
+        }
+        .list-item:last-child { border-bottom: none; }
+
+        nav.bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+            background: rgba(15, 20, 28, 0.96); backdrop-filter: blur(12px);
+            border-top: 1px solid var(--card-border);
+            display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px 10px 4px;
+        }
+        .nav-btn {
+            background: none; border: none; color: var(--muted);
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            font-size: 10px; font-weight: 500; cursor: pointer; padding: 4px 0;
+        }
+        .nav-btn.active { color: var(--accent); font-weight: 700; }
+        .nav-btn .ico { font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">🛡️ FinBot Terminal <span class="badge-live">MINI APP</span></div>
+    <button class="btn btn-outline btn-sm" onclick="promptApiUrl()">⚙️ API</button>
+</header>
+
+<div class="container">
+    <!-- ВКЛАДКА 1: AML & ГРАФ -->
+    <section id="tab-aml" class="tab-view active">
+        <div class="card">
+            <div class="card-title">🔍 AML-проверка и 3D-граф</div>
+            <select id="aml-currency">
+                <option value="usdt_trc20">USDT (TRC-20 / TRON)</option>
+                <option value="usdt_erc20">USDT (ERC-20 / Ethereum)</option>
+                <option value="usdc_erc20">USDC (ERC-20 / Ethereum)</option>
+                <option value="trx">TRX (Tron Native)</option>
+                <option value="eth">ETH (Ethereum)</option>
+                <option value="btc">BTC (Bitcoin)</option>
+            </select>
+            <input type="text" id="aml-address" placeholder="Вставьте адрес кошелька (T... / 0x... / bc1...)">
+            <button class="btn" id="btn-run-aml" onclick="runAmlCheck()">🚀 Запустить глубокий анализ</button>
+        </div>
+
+        <div id="aml-result-container" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:11px; color:var(--muted);" id="res-cur">USDT TRC-20</div>
+                        <div class="mono" id="res-addr" style="margin-top:2px;"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div id="res-score" style="font-size:24px; font-weight:800;">0%</div>
+                        <div id="res-level" style="font-size:11px;">Минимальный риск</div>
+                    </div>
+                </div>
+                <hr style="border:none; border-top:1px solid var(--card-border); margin:12px 0;">
+                <div class="stats-row" style="margin-bottom:8px;">
+                    <div class="stat-pill"><span>Баланс</span><b id="res-bal">0</b></div>
+                    <div class="stat-pill"><span>В USD</span><b id="res-usd">$0</b></div>
+                    <div class="stat-pill"><span>Транзакций</span><b id="res-tx">0</b></div>
+                </div>
+                <div id="res-signals" style="margin-top:8px;"></div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div class="card-title" style="margin:0;">🕸 Интерактивный граф связей</div>
+                    <button class="btn btn-outline btn-sm" onclick="fitGraph()">🎯 Центрировать</button>
+                </div>
+                <div id="graph-box"></div>
+                <div id="node-popup"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 2: BLACKLIST -->
+    <section id="tab-blacklist" class="tab-view">
+        <div class="stats-row">
+            <div class="stat-pill"><span>⚠️ Freeze-Gap</span><b id="bl-pending" style="color:var(--warn);">0</b></div>
+            <div class="stat-pill"><span>🚫 Заморожено</span><b id="bl-frozen" style="color:var(--danger);">0</b></div>
+            <div class="stat-pill"><span>🔥 Сожжено</span><b id="bl-destroyed" style="color:#a855f7;">0</b></div>
+        </div>
+        <div class="card">
+            <div style="display:flex; gap:6px; margin-bottom:10px;">
+                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('all')">🌐 Все</button>
+                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('pending')">⚠️ Готовятся</button>
+                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('frozen')">🚫 Заморожены</button>
+                <button class="btn btn-outline btn-sm" onclick="loadBlacklist('destroyed')">🔥 Сожжены</button>
+            </div>
+            <div id="bl-feed-list">Загрузка событий...</div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 3: КОШЕЛЬКИ -->
+    <section id="tab-wallets" class="tab-view">
+        <div class="card">
+            <div class="card-title">➕ Добавить в криптотрекер</div>
+            <select id="add-wallet-cur">
+                <option value="usdt_trc20">USDT (TRC-20)</option>
+                <option value="usdt_erc20">USDT (ERC-20)</option>
+                <option value="trx">TRX</option>
+                <option value="eth">ETH</option>
+                <option value="btc">BTC</option>
+                <option value="ton">TON</option>
+            </select>
+            <input type="text" id="add-wallet-addr" placeholder="Адрес кошелька">
+            <button class="btn" onclick="addWallet()">➕ Добавить кошелёк</button>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Мои отслеживаемые кошельки</div>
+            <div id="wallets-list">Загрузка...</div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 4: КУРСЫ -->
+    <section id="tab-rates" class="tab-view">
+        <div class="card">
+            <div class="card-title">💱 Актуальные котировки</div>
+            <input type="text" id="rate-search" placeholder="Поиск пары или источника (USD, Rapira, Binance...)" oninput="filterRates()">
+            <div id="rates-list">Загрузка курсов...</div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 5: ПРОФИЛЬ -->
+    <section id="tab-profile" class="tab-view">
+        <div class="card">
+            <div class="card-title">👤 Ваш аккаунт</div>
+            <div class="list-item"><span>Telegram ID</span><b id="prof-id">—</b></div>
+            <div class="list-item"><span>Подписка</span><b id="prof-sub">—</b></div>
+            <div class="list-item"><span>Баланс AML-проверок</span><b id="prof-aml">0</b></div>
+            <div class="list-item"><span>Бонусный баланс</span><b id="prof-bonus">0 ₽</b></div>
+            <div class="list-item"><span>Реферальный код</span><b class="mono" id="prof-ref">—</b></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 История AML-проверок</div>
+            <div id="prof-history">Загрузка...</div>
+        </div>
+    </section>
+</div>
+
+<nav class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('aml', this)"><span class="ico">🔍</span><span>AML & Граф</span></button>
+    <button class="nav-btn" onclick="switchTab('blacklist', this)"><span class="ico">🚨</span><span>Blacklist</span></button>
+    <button class="nav-btn" onclick="switchTab('wallets', this)"><span class="ico">💼</span><span>Кошельки</span></button>
+    <button class="nav-btn" onclick="switchTab('rates', this)"><span class="ico">💸</span><span>Курсы</span></button>
+    <button class="nav-btn" onclick="switchTab('profile', this)"><span class="ico">👤</span><span>Профиль</span></button>
+</nav>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('api')) {
+        localStorage.setItem('finbot_api_url', urlParams.get('api').replace(/\/$/, ''));
+    }
+
+    function getApiBase() {
+        return localStorage.getItem('finbot_api_url') || 'http://localhost:8080';
+    }
+
+    function promptApiUrl() {
+        const cur = getApiBase();
+        const next = prompt('Введите HTTPS URL вашего FastAPI сервера:', cur);
+        if (next) {
+            localStorage.setItem('finbot_api_url', next.trim().replace(/\/$/, ''));
+            location.reload();
+        }
+    }
+
+    async function apiFetch(path, options = {}) {
+        const headers = options.headers || {};
+        headers['Content-Type'] = 'application/json';
+        if (tg?.initData) {
+            headers['X-Telegram-Init-Data'] = tg.initData;
+        }
+        const devUid = urlParams.get('user_id') || '640831993';
+        const sep = path.includes('?') ? '&' : '?';
+        const url = `${getApiBase()}${path}${tg?.initData ? '' : sep + 'dev_user_id=' + devUid}`;
+        const res = await fetch(url, { ...options, headers });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(err.detail || 'Ошибка запроса');
+        }
+        return await res.json();
+    }
+
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        if (name === 'blacklist') loadBlacklist('all');
+        if (name === 'wallets') loadWallets();
+        if (name === 'rates') loadRates();
+        if (name === 'profile') loadProfile();
+    }
+
+    // ---------- 1. AML & VIS.JS GRAPH ----------
+    let networkInstance = null;
+
+    async function runAmlCheck(customAddr, customCur) {
+        const addrInput = document.getElementById('aml-address');
+        const curInput = document.getElementById('aml-currency');
+        const address = (customAddr || addrInput.value || '').trim();
+        const currency = customCur || curInput.value;
+        if (!address) return alert('Введите адрес кошелька');
+
+        addrInput.value = address;
+        curInput.value = currency;
+
+        const btn = document.getElementById('btn-run-aml');
+        btn.disabled = true;
+        btn.innerText = '⏳ Анализируем блокчейн и строим граф...';
+
+        try {
+            const data = await apiFetch('/api/aml/check', {
+                method: 'POST',
+                body: JSON.stringify({ address, currency })
+            });
+
+            document.getElementById('aml-result-container').style.display = 'block';
+            document.getElementById('res-cur').innerText = data.currency_display;
+            document.getElementById('res-addr').innerText = data.address;
+            document.getElementById('res-bal').innerText = data.balance;
+            document.getElementById('res-usd').innerText = '$' + data.balance_usd.toLocaleString();
+            document.getElementById('res-tx').innerText = data.tx_count;
+
+            const scoreEl = document.getElementById('res-score');
+            const levelEl = document.getElementById('res-level');
+            scoreEl.innerText = data.risk_score + '%';
+            if (data.risk_score >= 70) {
+                scoreEl.style.color = 'var(--danger)';
+                levelEl.innerText = '⛔ Высокий риск';
+            } else if (data.risk_score >= 35) {
+                scoreEl.style.color = 'var(--warn)';
+                levelEl.innerText = '⚠️ Средний риск';
+            } else {
+                scoreEl.style.color = 'var(--success)';
+                levelEl.innerText = '✅ Минимальный риск';
+            }
+
+            const sigBox = document.getElementById('res-signals');
+            sigBox.innerHTML = '';
+            (data.signals || []).forEach(s => {
+                sigBox.innerHTML += `<span class="tag tag-high">${s}</span>`;
+            });
+            (data.labels || []).forEach(l => {
+                const cls = l.tier === 'high' ? 'tag-high' : (l.tier === 'medium' ? 'tag-med' : 'tag-low');
+                sigBox.innerHTML += `<span class="tag ${cls}">${l.category}: ${l.percent.toFixed(1)}%</span>`;
+            });
+            if (!sigBox.innerHTML) {
+                sigBox.innerHTML = `<span class="tag tag-low">✅ Чистый кошелёк</span>`;
+            }
+
+            renderVisGraph(data.graph);
+        } catch (e) {
+            alert('Ошибка AML: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '🚀 Запустить глубокий анализ';
+        }
+    }
+
+    function renderVisGraph(graph) {
+        const container = document.getElementById('graph-box');
+        const nodes = new vis.DataSet(graph.nodes || []);
+        const edges = new vis.DataSet(graph.edges || []);
+        const options = {
+            nodes: {
+                shape: 'dot',
+                scaling: { min: 14, max: 36 },
+                font: { size: 11, color: '#e5e7eb', strokeWidth: 3, strokeColor: '#080b0e' },
+                borderWidth: 2
+            },
+            edges: {
+                color: { color: '#374151', highlight: '#ef4444' },
+                arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+                font: { size: 9, color: '#9ca3af', strokeWidth: 0 }
+            },
+            physics: {
+                barnesHut: { gravitationalConstant: -6000, springLength: 120 }
+            }
+        };
+        networkInstance = new vis.Network(container, { nodes, edges }, options);
+        networkInstance.on('click', function(params) {
+            const popup = document.getElementById('node-popup');
+            if (params.nodes.length > 0) {
+                const n = nodes.get(params.nodes[0]);
+                popup.style.display = 'block';
+                popup.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${n.category || 'Узел'}</b>
+                        <button class="btn btn-outline btn-sm" onclick="runAmlCheck('${n.id}')">🔍 Проверить этот узел</button>
+                    </div>
+                    <div class="mono" style="margin-top:4px; color:var(--muted);">${n.id}</div>
+                    ${n.amount ? `<div style="margin-top:4px;">Оборот / Баланс: <b>$${Number(n.amount).toLocaleString()}</b></div>` : ''}
+                `;
+            } else {
+                popup.style.display = 'none';
+            }
+        });
+    }
+
+    function fitGraph() {
+        if (networkInstance) networkInstance.fit({ animation: true });
+    }
+
+    // ---------- 2. BLACKLIST ----------
+    async function loadBlacklist(kind = 'all') {
+        const box = document.getElementById('bl-feed-list');
+        try {
+            const data = await apiFetch(`/api/blacklist?kind=${kind}&limit=25`);
+            document.getElementById('bl-pending').innerText = data.stats.pending;
+            document.getElementById('bl-frozen').innerText = data.stats.frozen;
+            document.getElementById('bl-destroyed').innerText = data.stats.destroyed;
+
+            if (!data.items.length) {
+                box.innerHTML = '<div style="color:var(--muted);">Событий не найдено</div>';
+                return;
+            }
+            box.innerHTML = data.items.map(it => {
+                const badge = it.kind === 'pending'
+                    ? '<span class="tag tag-med">⚠️ Скоро блок</span>'
+                    : (it.kind === 'destroyed' ? '<span class="tag tag-high">🔥 Сожжён</span>' : '<span class="tag tag-high">🚯 Заморожен</span>');
+                return `
+                    <div class="list-item" style="flex-direction:column; align-items:flex-start;">
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <div>${badge} <b>${it.symbol} (${it.network})</b></div>
+                            <span style="font-size:11px; color:var(--muted);">${it.date_str}</span>
+                        </div>
+                        <div class="mono" style="margin:4px 0;">${it.address}</div>
+                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                            <span style="font-size:12px;">Сумма: <b>${it.amount.toLocaleString()} ${it.symbol}</b></span>
+                            <button class="btn btn-outline btn-sm" onclick="openAddressInAml('${it.address}', '${it.network}')">🕸 На граф</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            box.innerHTML = `<div style="color:var(--danger);">Ошибка: ${e.message}</div>`;
+        }
+    }
+
+    function openAddressInAml(address, net) {
+        const cur = (net || '').toLowerCase().includes('erc') ? 'usdt_erc20' : 'usdt_trc20';
+        switchTab('aml', document.querySelectorAll('.nav-btn')[0]);
+        runAmlCheck(address, cur);
+    }
+
+    // ---------- 3. КОШЕЛЬКИ ----------
+    async function loadWallets() {
+        const box = document.getElementById('wallets-list');
+        try {
+            const data = await apiFetch('/api/wallets');
+            if (!data.wallets.length) {
+                box.innerHTML = '<div style="color:var(--muted);">У вас пока нет отслеживаемых кошельков.</div>';
+                return;
+            }
+            box.innerHTML = data.wallets.map(w => `
+                <div class="list-item" style="flex-direction:column; align-items:flex-start;">
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <b>${w.currency_display}</b>
+                        <b>${w.balance}</b>
+                    </div>
+                    <div class="mono" style="color:var(--muted); margin:4px 0;">${w.address}</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-outline btn-sm" onclick="switchTab('aml', document.querySelectorAll('.nav-btn')[0]); runAmlCheck('${w.address}', '${w.currency}')">🔍 AML & Граф</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteWallet('${w.currency}', '${w.address}')">🗑️ Удалить</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            box.innerHTML = `<div style="color:var(--danger);">${e.message}</div>`;
+        }
+    }
+
+    async function addWallet() {
+        const currency = document.getElementById('add-wallet-cur').value;
+        const address = document.getElementById('add-wallet-addr').value.trim();
+        if (!address) return alert('Введите адрес');
+        try {
+            await apiFetch('/api/wallets', {
+                method: 'POST',
+                body: JSON.stringify({ currency, address })
+            });
+            document.getElementById('add-wallet-addr').value = '';
+            loadWallets();
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    async function deleteWallet(currency, address) {
+        if (!confirm('Удалить кошелёк из трекера?')) return;
+        try {
+            await apiFetch('/api/wallets', {
+                method: 'DELETE',
+                body: JSON.stringify({ currency, address })
+            });
+            loadWallets();
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    // ---------- 4. КУРСЫ ----------
+    let cachedRates = [];
+    async function loadRates() {
+        const box = document.getElementById('rates-list');
+        try {
+            const data = await apiFetch('/api/rates');
+            cachedRates = data.raw_lines || [];
+            renderRates(cachedRates);
+        } catch (e) {
+            box.innerHTML = `<div style="color:var(--danger);">${e.message}</div>`;
+        }
+    }
+
+    function renderRates(lines) {
+        const box = document.getElementById('rates-list');
+        if (!lines.length) {
+            box.innerHTML = '<div style="color:var(--muted);">Курсы загружаются...</div>';
+            return;
+        }
+        box.innerHTML = lines.map(l => `<div class="list-item" style="padding:7px 0;"><div>${l}</div></div>`).join('');
+    }
+
+    function filterRates() {
+        const q = document.getElementById('rate-search').value.toLowerCase();
+        renderRates(cachedRates.filter(l => l.toLowerCase().includes(q)));
+    }
+
+    // ---------- 5. ПРОФИЛЬ ----------
+    async function loadProfile() {
+        try {
+            const data = await apiFetch('/api/profile');
+            document.getElementById('prof-id').innerText = data.user_id;
+            document.getElementById('prof-sub').innerText = data.subscription.name + (data.subscription.expires ? ` (${data.subscription.expires})` : '');
+            document.getElementById('prof-aml').innerText = data.aml_balance;
+            document.getElementById('prof-bonus').innerText = data.bonus_balance + ' ₽';
+            document.getElementById('prof-ref').innerText = data.referral_code;
+
+            const hBox = document.getElementById('prof-history');
+            if (!data.history.length) {
+                hBox.innerHTML = '<div style="color:var(--muted);">Проверок пока нет.</div>';
+                return;
+            }
+            hBox.innerHTML = data.history.map(h => `
+                <div class="list-item">
+                    <div>
+                        <div class="mono">${h.address.slice(0, 10)}…${h.address.slice(-6)}</div>
+                        <div style="font-size:11px; color:var(--muted);">${h.currency.toUpperCase()} · ${h.date}</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="switchTab('aml', document.querySelectorAll('.nav-btn')[0]); runAmlCheck('${h.address}', '${h.currency}')">
+                        🎯 ${h.risk_points.toFixed(1)}%
+                    </button>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Автозапуск проверки, если открыли Mini App по кнопке с конкретным адресом (?addr=...&cur=...)
+    window.addEventListener('DOMContentLoaded', () => {
+        const initAddr = urlParams.get('addr');
+        const initCur = urlParams.get('cur') || 'usdt_trc20';
+        if (initAddr) {
+            runAmlCheck(initAddr, initCur);
+        }
+    });
+</script>
+</body>
+</html>
