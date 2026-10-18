@@ -206,7 +206,7 @@ nav.bottom-nav{
 .grow{flex:1;min-width:0}
 .ta-c{text-align:center}
 
-  /* ---------- ACCORDION STYLES ---------- */
+/* ---------- ACCORDION STYLES ---------- */
 .source-accordion {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden;
@@ -357,7 +357,7 @@ nav.bottom-nav{
     <div class="card"><div class="card-title">📋 Мои кошельки</div><div id="wallets-list"></div></div>
   </section>
 
-  <!-- ================= RATES (С ВЫПАДАЮЩИМИ СПИСКАМИ ПО ИСТОЧНИКАМ) ================= -->
+  <!-- ================= RATES (АККОРДЕОНЫ ПО ИСТОЧНИКАМ) ================= -->
   <section id="tab-rates" class="tab-view">
     <div class="card" style="margin-bottom:8px;">
       <div class="card-title" style="margin-bottom:0;">
@@ -453,11 +453,10 @@ async function loadRates(){
     const items = d.items || [];
 
     if (!items.length){
-      container.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных о курсах</div><div class="em-sub">База данных пока не заполнена тикерами</div></div>';
+      container.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных о курсах</div></div>';
       return;
     }
 
-    // Группируем курсы по источникам
     const groups = {};
     items.forEach(it => {
       const src = it.source || 'Прочее';
@@ -487,7 +486,6 @@ async function loadRates(){
     }
     container.innerHTML = htmlContent;
   } catch(e){
-    console.error("Rates load error:", e);
     container.innerHTML = `<div class="text-danger fs-13 ta-c" style="padding:20px;">Ошибка загрузки: ${esc(e.message)}</div>`;
   }
 }
@@ -520,16 +518,6 @@ async function addWallet(){
     await apiFetch('/api/wallets', {method:'POST', body:JSON.stringify({currency, address})});
     toast('Кошелек добавлен', 'success'); loadWallets();
   }catch(e){ toast(e.message, 'error'); }
-}
-
-async function doConvert(){
-  const f = document.getElementById('conv-from').value;
-  const t = document.getElementById('conv-to').value;
-  const a = document.getElementById('conv-amount').value;
-  try{
-    const d = await apiFetch(`/api/rates/convert?from_curr=${f}&to_curr=${t}&amount=${a}`);
-    document.getElementById('conv-result').innerHTML = `<b>${a} ${f}</b> = <b style="color:var(--accent)">${Number(d.result).toFixed(2)} ${t}</b><br><span style="font-size:11px">Курс: ${Number(d.rate).toFixed(4)} (${d.source})</span>`;
-  }catch(e){ toast('Ошибка конвертации', 'error'); }
 }
 
 // ------------------- AML & GRAPH -------------------
