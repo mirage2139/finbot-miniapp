@@ -205,6 +205,33 @@ nav.bottom-nav{
 .row{display:flex;gap:8px;align-items:center}
 .grow{flex:1;min-width:0}
 .ta-c{text-align:center}
+
+  /* ---------- ACCORDION STYLES ---------- */
+.source-accordion {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden;
+  box-shadow: var(--shadow); transition: border-color 0.2s;
+}
+.source-accordion.open { border-color: var(--accent); }
+.source-header {
+  padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; background: var(--card2); user-select: none;
+}
+.source-header b { font-size: 13px; color: var(--text); letter-spacing: 0.3px; }
+.source-header .arrow { font-size: 12px; color: var(--muted); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+.source-accordion.open .arrow { transform: rotate(180deg); color: var(--accent); }
+.source-content {
+  max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+  padding: 0 16px; background: rgba(10,14,20,0.4);
+}
+.source-accordion.open .source-content { max-height: 500px; padding: 10px 16px 14px 16px; }
+.rate-row-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 13px;
+}
+.rate-row-item:last-child { border-bottom: none; }
+.rate-row-item span { color: var(--muted); font-weight: 600; }
+.rate-row-item b { color: var(--text2); font-family: ui-monospace, monospace; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -330,23 +357,18 @@ nav.bottom-nav{
     <div class="card"><div class="card-title">📋 Мои кошельки</div><div id="wallets-list"></div></div>
   </section>
 
-  <!-- ================= RATES (БЕЗ ГРАФИКОВ) ================= -->
+  <!-- ================= RATES (С ВЫПАДАЮЩИМИ СПИСКАМИ ПО ИСТОЧНИКАМ) ================= -->
   <section id="tab-rates" class="tab-view">
-    <div class="card">
-      <div class="card-title">🔄 Конвертер</div>
-      <div class="row">
-        <input type="text" id="conv-from" placeholder="USD" value="USD" style="flex:1;text-transform:uppercase" autocomplete="off">
-        <span style="color:var(--muted);font-size:18px;font-weight:700;">→</span>
-        <input type="text" id="conv-to" placeholder="RUB" value="RUB" style="flex:1;text-transform:uppercase" autocomplete="off">
+    <div class="card" style="margin-bottom:8px;">
+      <div class="card-title" style="margin-bottom:0;">
+        <span>💹 Актуальные курсы валют</span>
+        <span class="hint">По источникам</span>
       </div>
-      <input type="number" id="conv-amount" value="100" placeholder="Сумма">
-      <button class="btn btn-primary" onclick="doConvert()">💱 Конвертировать</button>
-      <div id="conv-result" class="ta-c mt-10" style="color:var(--muted);font-size:13px;"></div>
     </div>
-
-    <div class="card">
-      <div class="card-title">💹 Курсы</div>
-      <div id="rates-list"></div>
+    <div id="rates-accordion-container">
+      <div class="skel skel-line w80" style="height:44px; margin-bottom:10px;"></div>
+      <div class="skel skel-line w80" style="height:44px; margin-bottom:10px;"></div>
+      <div class="skel skel-line w80" style="height:44px; margin-bottom:10px;"></div>
     </div>
   </section>
 
@@ -424,12 +446,54 @@ async function loadWallets(){
 }
 
 async function loadRates(){
-  try{
+  const container = document.getElementById('rates-accordion-container');
+  try {
     const d = await apiFetch('/api/rates');
-    document.getElementById('rates-list').innerHTML = d.items.map(r=>`
-      <div class="list-item"><div class="li-main"><div class="li-title">${r.pair}</div><div class="li-sub">${r.source}</div></div><b style="font-size:16px">${r.value.toFixed(2)}</b></div>
-    `).join('');
-  }catch(e){ toast('Ошибка курсов', 'error'); }
+    const items = d.items || [];
+
+    if (!items.length){
+      container.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных</div></div>';
+      return;
+    }
+
+    // Группируем курсы по источникам
+    const groups = {};
+    items.forEach(it => {
+      const src = it.source || 'Прочее';
+      if (!groups[src]) groups[src] = [];
+      groups[src].push(it);
+    });
+
+    let htmlContent = '';
+    for (const [sourceName, rateList] of Object.entries(groups)) {
+      const isOpen = sourceName === 'Москва' || sourceName === 'Rapira' ? 'open' : '';
+      htmlContent += `
+        <div class="source-accordion ${isOpen}">
+          <div class="source-header" onclick="toggleAccordion(this)">
+            <b>📍 ${esc(sourceName)}</b>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="source-content">
+            ${rateList.map(r => `
+              <div class="rate-row-item">
+                <span>${esc(r.pair)}</span>
+                <b>${Number(r.value).toFixed(r.value > 100 ? 2 : 4)}</b>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = htmlContent;
+  } catch(e){
+    container.innerHTML = '<div class="text-danger fs-13 ta-c">Ошибка загрузки курсов</div>';
+  }
+}
+
+function toggleAccordion(headerEl){
+  haptic('light');
+  const card = headerEl.parentElement;
+  card.classList.toggle('open');
 }
 
 async function loadBlacklist(){
