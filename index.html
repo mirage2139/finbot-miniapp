@@ -447,12 +447,13 @@ async function loadWallets(){
 
 async function loadRates(){
   const container = document.getElementById('rates-accordion-container');
+  container.innerHTML = '<div class="skel skel-line w80" style="height:44px; margin-bottom:10px;"></div>';
   try {
     const d = await apiFetch('/api/rates');
     const items = d.items || [];
 
     if (!items.length){
-      container.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных</div></div>';
+      container.innerHTML = '<div class="empty"><div class="em-ico">📉</div><div class="em-title">Нет данных о курсах</div><div class="em-sub">База данных пока не заполнена тикерами</div></div>';
       return;
     }
 
@@ -486,7 +487,8 @@ async function loadRates(){
     }
     container.innerHTML = htmlContent;
   } catch(e){
-    container.innerHTML = '<div class="text-danger fs-13 ta-c">Ошибка загрузки курсов</div>';
+    console.error("Rates load error:", e);
+    container.innerHTML = `<div class="text-danger fs-13 ta-c" style="padding:20px;">Ошибка загрузки: ${esc(e.message)}</div>`;
   }
 }
 
